@@ -1,0 +1,334 @@
+---
+title: "PS 3: Week 4"
+subtitle: "Correlation, Causation, and Treatment Effects"
+author: "Maya Mikelson"
+output:
+  beamer_presentation:
+    theme: "Madrid"
+    colortheme: "default"
+    #incremental: true
+header-includes:
+  - \usepackage{tikz}
+  - \usetikzlibrary{arrows.meta, positioning, shapes.geometric}
+  - \usepackage{colortbl}
+---
+
+```{r setup, include=FALSE}
+library(haven)
+library(dplyr)
+library(tidyverse)
+library(kableExtra)
+knitr::opts_chunk$set(echo = TRUE, eval = TRUE, comment = "#>", size = "small")
+
+# Change this filename each week to that week's QR code image.
+# Just drop the image file in the same folder as this .Rmd.
+qr_image <- "adobe-express-qr-code-2.png"
+quote <- "mothersday.png"
+```
+
+
+## Agenda
+
+\begin{enumerate}
+\item Omitted Variable Bias
+\item Reverse Causation
+\item Potential Outcomes Framework
+\item Treatment Effects
+\end{enumerate}
+
+## Attendance Survey
+
+\begin{center}
+\includegraphics[width=0.5\textwidth]{`r qr_image`}
+\end{center}
+
+## Mother's Day: A Correlation
+
+\begin{center}
+\includegraphics[width=0.5\textwidth]{`r quote`}
+\end{center}
+
+## Mothers and Crime
+
+\begin{center}
+\begin{tikzpicture}[
+  node distance=3cm,
+  ell/.style={ellipse, draw, minimum width=2.4cm, minimum height=1.2cm, align=center}
+]
+\node[ell, fill=pink!60] (mothers) {Mothers};
+\node[ell, fill=blue!20, right=of mothers] (crime) {Crime};
+\draw[-{Stealth[length=3mm]}, thick] (mothers) -- (crime);
+\end{tikzpicture}
+\end{center}
+
+## Mothers and Crime: A Third Factor
+
+\begin{center}
+\resizebox{0.8\textwidth}{!}{%
+\begin{tikzpicture}[
+  node distance=2.5cm and 3cm,
+  ell/.style={ellipse, draw, minimum width=2.6cm, minimum height=1.2cm, align=center}
+]
+\node[ell, fill=green!40] (criminals) {Criminals};
+\node[ell, fill=pink!60, below left=of criminals] (mothers) {Mothers};
+\node[ell, fill=blue!20, below right=of criminals] (crime) {Crime};
+\draw[-{Stealth[length=3mm]}, thick] (criminals) -- node[left]{$+$} (mothers);
+\draw[-{Stealth[length=3mm]}, thick] (criminals) -- node[right]{$-$} (crime);
+\draw[-{Stealth[length=3mm]}, thick, dashed] (mothers) -- (crime);
+\end{tikzpicture}%
+}
+\end{center}
+
+## Omitted Variable Bias
+
+- When a third factor causes **both A and B**
+  - This is what makes A related to B without causing B
+  - Preview: controlling for this third factor can eliminate the relationship between A and B
+
+## Autocracy and War
+
+\begin{center}
+\begin{tikzpicture}[
+  node distance=3cm,
+  ell/.style={ellipse, draw, minimum width=2.6cm, minimum height=1.2cm, align=center}
+]
+\node[ell, fill=blue!20] (autocracy) {Autocracy};
+\node[ell, fill=pink!60, right=of autocracy] (war) {Country goes to war};
+\draw[{Stealth[length=3mm]}-, thick] (autocracy) -- (war);
+\end{tikzpicture}
+\end{center}
+
+\begin{center}
+\large{\textbf{OR}}
+\end{center}
+
+\begin{center}
+\begin{tikzpicture}[
+  node distance=3cm,
+  ell/.style={ellipse, draw, minimum width=2.6cm, minimum height=1.2cm, align=center}
+]
+\node[ell, fill=blue!20] (autocracy) {Autocracy};
+\node[ell, fill=pink!60, right=of autocracy] (war) {Country goes to war};
+\draw[-{Stealth[length=3mm]}, thick] (autocracy) -- (war);
+\end{tikzpicture}
+\end{center}
+
+\vspace{2em}
+
+\textcolor{blue}{What could be a third variable that explains this?}
+
+## Autocracy and War: A Third Factor
+
+\begin{center}
+\resizebox{0.8\textwidth}{!}{%
+\begin{tikzpicture}[
+  node distance=2.5cm and 3cm,
+  ell/.style={ellipse, draw, minimum width=2.6cm, minimum height=1.2cm, align=center}
+]
+\node[ell, fill=green!40] (gdp) {Low GDP};
+\node[ell, fill=blue!20, below left=of gdp] (autocracy) {Autocracy};
+\node[ell, fill=pink!60, below right=of gdp] (war) {Country goes to war};
+\draw[-{Stealth[length=3mm]}, thick] (gdp) -- node[left]{$+$} (autocracy);
+\draw[-{Stealth[length=3mm]}, thick] (gdp) -- node[right]{$+$} (war);
+\draw[-{Stealth[length=3mm]}, thick] (autocracy) -- node[below]{$+$} (war);
+\end{tikzpicture}%
+}
+\end{center}
+
+\vspace{2em}
+
+This is an example of omitted variable bias
+
+## Reverse Causation
+
+- When you find a correlation between two variables, ask whether A can feasibly cause B, and whether B can feasibly cause A
+  - In what order do the factors occur?
+    - It is impossible for A to cause B if A came after B, for instance
+    - Things occurring at the same time probably can't cause each other
+  - Even if the timing works, is the explanation feasible?
+
+## Treatment
+
+- A treatment (independent variable) is the condition we want to test in a study.
+   - In a medical study, the treatment is a literal treatment or drug given to some patients (the treatment group) but not others (the control group).
+
+- Then, we compare the two groups on some outcome (dependent variable).
+
+
+## The Potential Outcomes Framework
+
+If we apply a treatment, what could happen?
+
+\vspace{1em}
+
+\begin{columns}
+\column{0.4\textwidth}
+\begin{block}{If I did X, then Z would happen.}
+\footnotesize
+For example: If I took this experimental drug, then my resting heart rate would decrease.
+\end{block}
+
+\column{0.4\textwidth}
+\begin{alertblock}{If I did NOT do X, then Y would happen.}
+\footnotesize
+If I didn't take this drug, then my resting heart rate would stay the same.
+\end{alertblock}
+\end{columns}
+
+## Individual Treatment Effect
+
+- Treatment effect for individuals
+  - The effect the treatment would have relative to what would have happened without the treatment
+  - Can be zero
+  
+\pause
+
+\begin{center}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lccc}
+\hline
+Participant & Heart rate w/ drug (BPM) & Heart rate w/o drug (BPM) & Individual TE \\
+\hline
+Jeremy & 64 & 54 & 10 \\
+Tess & 58 & 78 & ? \\
+Vivian & 60 & 60 & ? \\
+\hline
+\end{tabular}%
+}
+\end{center}
+
+
+## Assigning Treatments to Groups
+
+- Each person can only experience 1 outcome at a time.
+  - If I take this medicine, my heart rate can't go up AND down.
+  
+\pause
+
+- So, we need to compare two groups!
+  - Treatment group (what happens if they get the medicine?)
+  - Control group (what happens in the absence of that medicine?)
+  
+\pause
+
+- We can estimate the treatment effect by comparing these two groups
+
+## Comparing Groups
+
+\begin{center}
+\resizebox{\textwidth}{!}{%
+\begin{tikzpicture}[
+  node distance=0.9cm and 1.1cm,
+  box/.style={rectangle, draw, rounded corners, align=center, minimum height=1cm, text width=2.1cm, font=\small}
+]
+\node[box, fill=green!30] (input) {Input\\(independent var.)};
+\node[box, fill=gray!20, above right=of input] (tgroup) {Treatment Group};
+\node[box, fill=pink!40, below right=of input] (cgroup) {Control Group};
+\node[box, fill=blue!20, right=of tgroup] (outa) {Outcome A\\(dependent var.)};
+\node[box, fill=pink!40, right=of cgroup] (outb) {Outcome B\\(dependent var.)};
+\node[box, fill=yellow!30, right=1.1cm of outa, below=0.45cm of outa.south, anchor=north west, xshift=0cm] (compare) {Compare outcomes (treatment effect)};
+
+\draw[-{Stealth[length=3mm]}] (input) -- (tgroup);
+\draw[-{Stealth[length=3mm]}] (input) -- (cgroup);
+\draw[-{Stealth[length=3mm]}] (tgroup) -- (outa);
+\draw[-{Stealth[length=3mm]}] (cgroup) -- (outb);
+\draw[-{Stealth[length=3mm]}] (outa) -- (compare);
+\draw[-{Stealth[length=3mm]}] (outb) -- (compare);
+\end{tikzpicture}%
+}
+\end{center}
+
+## Average Treatment Effect
+
+- The average treatment effect is defined as the average outcome for treated individuals minus the average outcome for non-treated individuals
+
+\pause
+
+\begin{center}
+\begin{tabular}{lcccc}
+\hline
+Participant & HR w/ drug & HR w/o drug & Avg. within group & ATE \\
+\hline
+Tess & 64 & - & 61 & 6 \\
+Jeremy & 58 & - & & \\
+Jihan & - & 60 & 55 & \\
+Vivian & - & 50 & & \\
+\hline
+\end{tabular}
+\end{center}
+
+- On average, individuals who receive the treatment have a resting heart rate of six BPM higher than individuals who do not receive the treatment (yikes!)
+
+## TV Viewership Example based on Broockman and Kalla, 2024
+
+\textbf{For Fox News viewers, does watching CNN increase trust in CNN?}
+
+- \textcolor{blue}{Every individual has 2 potential outcomes, what are they?}
+\pause
+   - Trust in CNN if they watch CNN
+   - Trust in CNN if they do not watch CNN
+
+\pause
+- Elijah has 2 potential outcomes:
+   - Trust of 4/5 if he watches CNN
+   - Trust of 1/5 if he does not watch CNN
+   
+\pause
+- But in the real world, we can never observe both, \textcolor{blue}{what do we do?}
+
+## TV Viewership Example based on Broockman and Kalla, 2024
+
+- But in the real world, we can never observe both, \textcolor{blue}{what do we do?}
+\pause
+   - Randomly assign viewing CNN and evaluate feelings
+
+\pause
+
+```{r, echo=FALSE}
+primary <- read_dta("/Users/mikelson/Desktop/Berkeley/GSI/PS3/Week 4/JOP Replication/data/input/primary_dataset_unstd.dta")
+
+primary %>% group_by(treat) %>% summarize(trust_cnn = mean(t3_trust_cnn, na.rm=T)) %>%
+   kable(format = "latex", booktabs = TRUE) %>%
+   kable_styling(font_size = 10)
+```
+
+
+## Selection into Treatment
+
+- We can't always randomly assign who gets treated
+  - Who chooses to participate in a medical study?
+  - Which countries go to war?
+  - Who comes to section?
+- Why might people experience a certain treatment? How might that correlate with the effects we care about?
+- \textcolor{blue}{How do we solve this problem?}
+
+## Review of Terms
+
+\footnotesize
+
+- **Potential outcome**
+  - What could happen if you were treated or what could happen if you were in the control
+  - Ex: The potential outcome of taking a medication is having a lower heart rate. The potential outcome of not taking a medication is having the same heart rate as before.
+- **Individual treatment effect**
+  - The effect the treatment would have relative to what would have happened without the treatment for a single individual
+  - Could be positive (the treatment causes an increase in the outcome), negative (the treatment causes a decrease in the outcome) or zero (the treatment has no effect)
+  - Through randomization, we assign treatment to groups to ensure that the only thing that varies from one group to the other is treatment
+  - That way, we know that only the treatment can cause the change in outcome
+- **Selection into treatment**
+  - A concern that arises when subjects can choose to be treated (or not) and those that choose to be treated are different from those who don't
+  
+## Housekeeping
+
+- Submitting assignments:
+  - .zip folder, not file
+  - Keep the name of the object in Jupyter
+- Midterm
+  - No coding
+  - Multiple choice
+- Problem set due October 2
+- The attendance form will be at a random time during class going forward, unless you have previously told me you are rushing from another class, if you show up late and miss the QR code you will not receive attendance credit for that class
+
+## Acknowledgements
+
+Special thanks Will Halm and other prior GSIs for providing materials off of which some of these slides are based.
+

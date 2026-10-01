@@ -1,0 +1,271 @@
+---
+title: "PS 3 Week 3 Section"
+subtitle: "Subsetting, Means, and One-/Two-Way Tables"
+author: "PS 3 Section"
+date: "Week 3"
+output:
+  beamer_presentation:
+    theme: "Madrid"
+    colortheme: "seahorse"
+    fonttheme: "structurebold"
+    slide_level: 2
+params:
+  show_answers: true
+header-includes:
+  - \usepackage{array}
+  - \definecolor{darkgreen}{rgb}{0, 0.5, 0}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, eval = TRUE, comment = "#>", size = "small")
+
+# Change this filename each week to that week's QR code image.
+# Just drop the image file in the same folder as this .Rmd.
+qr_image <- "attendance_qr.png"
+```
+
+## Today's Agenda
+
+- Vocabulary & key terms recap
+- Functions
+- Live demo: putting it together
+- Common mistakes (and how to avoid them)
+- Why do we care? Tables, hypotheses, and a caution
+
+*Goal: by the end of section, you can go from a raw dataset to an answer
+to a research question, using `$`, `mean()`, `subset()`, and `table()`.*
+
+## Quick Vocabulary Check
+
+\small
+
+- **Data frame:** a rectangular dataset in R -- rows are observations,
+  columns are variables (e.g. `cafe`).
+- **Variable (column):** one measured characteristic, e.g. `drinks`.
+- **Observation (row):** one unit in the dataset, e.g. one day/time
+  slot.
+- **Scalar:** a single value, e.g. `85`, or the result of `mean(x)`.
+- **Vector:** a sequence of values of the same type, e.g.
+  `cafe$drinks`.
+- **Categorical variable:** takes on named categories, e.g. `"AM"` /
+  `"PM"`.
+- **Function / argument:** `mean(x)` is a function; `x` is the
+  argument you give it.
+
+
+## Functions we have learned
+
+\footnotesize
+\begin{center}
+\begin{tabular}{|p{2cm}|p{3.4cm}|p{4.8cm}|}
+\hline
+\textbf{Function} & \textbf{What it does} & \textbf{Example} \\
+\hline
+\texttt{dataset\$var} & pulls out one column & \texttt{officerdata\$contra} \\
+\hline
+\texttt{mean(x)} & average of a numeric variable & \texttt{mean(officerdata\$contra)} \\
+\hline
+\texttt{subset(data, cond)} & keeps only rows meeting a condition & \texttt{subset(officerdata, officer\_female == 1)} \\
+\hline
+\texttt{table(x)} & counts of one categorical variable & \texttt{table(officerdata\$driver\_race)} \\
+\hline
+\texttt{table(x, y)} & counts of combinations of two categorical variables & \texttt{table(x, y)} \\
+\hline
+\end{tabular}
+\end{center}
+
+## A New Example: Coffee Shop Data
+
+Small dataset practice.
+
+```{r cafe-data, size="footnotesize"}
+cafe <- data.frame(
+  day      = c("Mon","Mon","Tue","Tue","Wed","Wed","Fri","Fri"),
+  daypart  = c("AM","PM","AM","PM","AM","PM","AM","PM"),
+  drinks   = c(85,40,90,45,78,50,120,80),
+  size_cat = c("Rush","Slow","Rush","Slow","Rush","Slow","Rush","Rush")
+)
+head(cafe)
+```
+
+`daypart`: `"AM"` = morning, `"PM"` = afternoon.
+
+## Spot the error (or lack thereof)
+
+Discuss these in small groups (2-4 people) and if you think it will run and if it does, what will it print out.
+
+```{r error-1, eval=FALSE}
+cafe.morning <- subset(cafe, daypart == "AM")
+```
+
+
+```{r error-2, eval=FALSE}
+cafe$cafe.morning$drinks
+```
+
+
+```{r error-3, eval=FALSE}
+mean(cafe)
+```
+
+## Spot the error (or lack thereof)
+
+```{r error-1-eval, eval=FALSE}
+cafe.morning <- subset(cafe, daypart == "AM")
+```
+
+\textcolor{darkgreen}{Correct!}
+
+```{r error-2-eval, eval=FALSE}
+cafe$cafe.morning$drinks
+```
+
+\textcolor{red}{Should just be }`cafe.morning$drinks`
+
+```{r error-3-eval, eval=FALSE}
+mean(cafe)
+```
+
+\textcolor{red}{Needs to do a specific column in the dataset. Such as }`mean(cafe$drinks)`
+
+
+## Step 1: Pull Out a Variable and Take a Mean
+
+```{r mean-demo}
+cafe$drinks
+mean(cafe$drinks)
+```
+
+**What does this one number tell us and what does it hide?**
+
+## Step 2: Subset, Then Summarize
+
+```{r subset-demo}
+morning.only <- subset(cafe, daypart == "AM")
+mean(morning.only$drinks)
+```
+
+- Same idea as Week 2: `subset()` first, *then* compute on the subset.
+- What changes when we switch `"AM"` for `"PM"`?
+
+## What changes when we switch "AM" for "PM"?
+
+```{r subset-demo-afternoon}
+afternoon.only <- subset(cafe, daypart == "PM")
+mean(afternoon.only$drinks)
+```
+
+## Step 3: One-Way Table
+
+```{r oneway-demo}
+table(cafe$size_cat)
+```
+
+- Frequency table: how many rows fall into each category?
+- Useful first step before you subset or cross-tabulate.
+
+## Step 4: Two-Way Table
+
+```{r twoway-demo}
+table(cafe$daypart, cafe$size_cat)
+```
+
+- Rows = first variable, columns = second variable.
+- How many instances fall into combinations of categories?
+
+## Correcting Common Mistakes
+
+```{r mistakes-demo, eval=FALSE}
+# Mistake: single = instead of double ==
+subset(cafe, daypart = "AM")      # ERROR
+
+# Fixed: use == to test equality, not =
+subset(cafe, daypart == "AM")     # correct
+```
+
+- `=` **assigns** a value; `==` **compares** two values.
+- Only `==` belongs inside a `subset()` condition.
+
+## Mean of a Categorical Variable
+
+```{r categorical-mean-demo, warning=TRUE}
+mean(cafe$daypart)
+```
+
+- `daypart` is categorical (`"AM"` / `"PM"`), not numeric. So `mean()` gives a warning and returns `NA`
+- Check whether a variable is categorical or numeric *before* you use `mean()`
+
+## Using the $ to get a column from a dataframe
+
+- Before the `$` is the name of the dataframe, after the `$` is the name of the column.
+- If we wanted to get the days in the dataset, what would we type?
+   - column names are: `day`, `daypart`, `drinks`, `size_cat`
+   - name of the dataframe: `cafe`
+
+## Using the $ to get a column from a dataframe
+- If we wanted to get the days in the dataset, what would we type?
+
+```{r column-subset, warning=TRUE}
+cafe$day
+```
+
+## Why Do We Care? (Recap from Lecture)
+
+$$\text{Theory} \rightarrow \text{Hypothesis} \rightarrow \text{Empirical Test} \rightarrow \text{Re-Evaluate Theory}$$
+
+- A one-way table describes *one* thing.
+- A two-way table lets us **test a hypothesis** about how two variables relate.
+- Example: "Rush periods are more common in the morning" is a hypothesis we can *check* with the two-way table above.
+
+## Tips for Analyzing the Data
+
+- Stick to the facts first: what does the table literally say?
+- *Then* you might hypothesize about *why*.
+- **We only know what the data shows.** The data can't tell us why something is happening.
+  - E.g., with the officer-stop data from Week 2: if female officers
+    have a higher contraband-find rate than male officers, is that
+    because they're better at spotting contraband, or because
+    they're more selective about who they search? The table alone
+    can't say.
+    
+## Reminders
+
+- Make sure to follow the instructions at the end of the assignments before you submit
+   - If you forget to save and wait 5 seconds, you may lose points because it does not have the last things you typed in
+- Make sure to use the same names of dataframes and variables as the original .ipynb file has -- that is how the autograder is checking your work
+
+## Recap
+
+\footnotesize
+\begin{center}
+\begin{tabular}{|p{2.8cm}|p{6.6cm}|}
+\hline
+\textbf{Function} & \textbf{Use it when...} \\
+\hline
+\texttt{dataset\$var} & you need one column \\
+\hline
+\texttt{mean()} & you want the average of a numeric variable \\
+\hline
+\texttt{subset()} & you want only some rows \\
+\hline
+\texttt{table(x)} & you want counts of one categorical variable \\
+\hline
+\texttt{table(x, y)} & you want to see how two categorical variables relate \\
+\hline
+\end{tabular}
+\end{center}
+
+## Before You Go
+
+- You have the remainder of class to work on the problem set.
+\vspace{1em}
+- **Problem Set 1:** due **October 2**.
+- R Cheat Sheet has every function from today.
+- My office hours: **Mon & Fri, 1--2pm**.
+- Check the syllabus for other GSIs' office hours.
+
+## Attendance
+
+\begin{center}
+\includegraphics[width=0.5\textwidth]{`r qr_image`}
+\end{center}

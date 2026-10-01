@@ -1,0 +1,412 @@
+---
+title: "PS 3: Week 5"
+subtitle: "Randomized Experiments vs. Observational Data"
+author: "Maya Mikelson"
+date: "Week 5"
+output:
+  beamer_presentation:
+    theme: "Madrid"
+    colortheme: "default"
+    slide_level: 2
+params:
+  show_answers: true
+header-includes:
+  - \usepackage{array}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, eval = TRUE, comment = "#>", size = "small")
+
+social <- read.csv('ps3_week5_social_pressure.csv')
+
+# Change this filename each week to that week's QR code image.
+# Just drop the image file in the same folder as this .Rmd.
+qr_image <- "attendance_qr.png"
+```
+
+## A Motivating Case: Tylenol \& Autism
+
+- Some observational data shows children whose mothers took
+  acetaminophen during pregnancy were slightly more likely to be
+  diagnosed with autism.
+- \textcolor{blue}{Is this causal?}
+
+\pause
+
+- **Omitted variable bias:** people who take Tylenol may do so
+  because of other conditions (chronic pain, environmental factors,
+  etc.) that could *also* raise autism risk.
+- **Selection bias:** people who choose to take a "treatment" may
+  differ, in ways connected to the outcome, from those who don't.
+
+## A Potential Causal Effect: Populism
+
+- Campaigns want to know whether **populist rhetoric** -- framing
+  some "elite" (a party, billionaires, cultural elites) as unfairly
+  ruling over "the people" -- actually persuades voters.
+\pause
+- Imagine voters in a 2026 campaign: some are exposed to populist
+  rhetoric, and each later votes for Party P or Party O.
+
+\pause
+
+\vspace{6pt}
+**Discuss:**
+
+- \textcolor{blue}{What's the \textbf{treatment} in this example?}
+\vspace{.5em}
+- \textcolor{blue}{What are the \textbf{potential outcomes}?}
+\vspace{.5em}
+- \textcolor{blue}{What is each individual's \textbf{treatment effect}?}
+
+```{r populism, results='asis', echo=FALSE}
+if (params$show_answers) {
+  cat("
+## Populism
+
+- \\textcolor{blue}{What's the \\textbf{treatment} in this example?}
+
+\\begin{quote}
+Exposure to populist rhetoric
+\\end{quote}
+
+- \\textcolor{blue}{What are the \\textbf{potential outcomes}?}
+
+\\begin{quote}
+Voters vote choice when exposed to populist rhetoric
+
+Voters vote choice when not exposed to populist rhetoric
+\\end{quote}
+
+- \\textcolor{blue}{What is each individual's \\textbf{treatment effect}?}
+
+\\begin{quote}
+Vote when exposed to populist rhetoric - Vote when not exposed to populist rhetoric
+\\end{quote}
+")
+}
+```
+
+
+## Potential Outcomes
+
+\footnotesize
+\begin{center}
+\begin{tabular}{|p{1.6cm}|p{2.5cm}|p{3cm}|p{3cm}|}
+\hline
+\textbf{Voter} & \textbf{Vote if exposed?} & \textbf{Vote if not exposed?} & \textbf{Individual Treatment Effect} \\
+\hline
+Tess & 0 & 0 & 0 \\
+\hline
+Jeremy & 1 & 1 & 0 \\
+\hline
+Anne Marie & 1 & 0 & 1 \\
+\hline
+Jack & 0 & 1 & -1 \\
+\hline
+\end{tabular}
+\end{center}
+
+*1: Party P*
+
+*0: Party O*
+
+## Observational Data on Populism
+
+- A survey of over 1 million voters asks: were you exposed to Party
+  P's populist rhetoric in 2026 (TV, social media, mailers, etc.)?
+  Who did you vote for?
+- People exposed to the rhetoric are **far more likely** to vote for
+  Party P.
+
+\pause
+
+\vspace{6pt}
+**Discuss:**
+
+- \textcolor{blue}{How confident should we be that this is \textit{causal}?}
+- \textcolor{blue}{What sources of bias might undermine this finding?}
+- \textcolor{blue}{What are the \textit{advantages} of a dataset like this?}
+
+
+```{r obs-populism, results='asis', echo=FALSE}
+if (params$show_answers) {
+  cat("
+## Observational Data on Populism
+
+- \\textcolor{blue}{How confident should we be that this is \\textit{causal}?}
+
+\\begin{quote}
+\\small Not confident. There is no random assignment. People could have opted in to mailers.
+\\end{quote}
+
+- \\textcolor{blue}{What sources of bias might undermine this finding?}
+
+\\begin{quote}
+\\small \\textbf{Selection Bias}: People who remembered receiving populist rhetoric might have been more influenced by it and therefore also more likely to report voting for Party P.
+
+\\small \\textbf{Omitted Variable Bias}: Underlying factors (like prior political leaning, geographic location, or media consumption) could cause both exposure to the rhetoric and the decision to vote for Party P.
+
+\\small \\textbf{Reverse Causation}: Voters who already decided to vote for Party P might actively seek out their campaign materials or sympathetic media.
+\\end{quote}
+
+- \\textcolor{blue}{What are the \\textit{advantages} of a dataset like this?}
+
+\\begin{quote}
+\\small \\textbf{Massive sample size}: 1 million voters provides high statistical power.
+
+\\small \\textbf{High external validity}: It captures how real voters behave in the real world during an actual campaign, rather than in an artificial lab setting.
+\\end{quote}
+
+")
+}
+```
+
+
+## Omitted Variable Bias, Selection Bias, and Reverse Causation!
+
+\footnotesize
+\begin{center}
+\begin{tabular}{|p{1.4cm}|p{2.8cm}|p{2.6cm}|p{2.6cm}|}
+\hline
+\textbf{Voter} & \textbf{Exposed in 2025?} & \textbf{Voted P 2025?} & \textbf{Voted P 2021?} \\
+\hline
+Tess & 1 & 1 & 1 \\
+\hline
+Jeremy & 1 & 1 & 1 \\
+\hline
+Anne Marie & 0 & 0 & 0 \\
+\hline
+Jack & 0 & 0 & 0 \\
+\hline
+\end{tabular}
+\end{center}
+
+## How Do We Resolve These Biases?
+
+- With observational data, people can **select into treatment**.
+- If that selection *and* the outcome are both explained by some
+  other variable, that's **omitted variable bias**.
+  - E.g., men being less risk-averse $\rightarrow$ more likely to
+    take an experimental drug *and* have lower resting heart rates.
+- **Randomization** makes treatment and control groups similar on
+  *all* variables (given a large enough sample) -- no more omitted variable bias to
+  worry about.
+  - E.g., prior vote can no longer cause *both* exposure to rhetoric
+    and future vote, because it's balanced across groups.
+
+## Designing an Experiment on Populism
+
+**How might we set this up?**
+
+- What's the treatment?
+- How is the treatment assigned?
+- What outcome(s) are we measuring?
+- What variables should we measure?
+  - Often driven by which **omitted variables** we're worried about.
+  
+  
+```{r populism-experiment, results='asis', echo=FALSE}
+if (params$show_answers) {
+  cat("
+## Designing an Experiment on Populism
+
+- \\textcolor{blue}{What's the treatment?}
+
+\\begin{quote}
+\\textbf{Treatment group} sees a message from Party P: Party O has spent 12 years in power doing nothing for hardworking people while enriching themselves and their billionaire friends; Party P is committed to social welfare spending instead.
+  
+\\textbf{Control group} sees nothing.
+\\end{quote}
+
+- \\textcolor{blue}{How is the treatment assigned?}
+
+\\begin{quote}
+Randomly
+\\end{quote}
+
+- \\textcolor{blue}{What outcome(s) are we measuring?}
+
+\\begin{quote}
+Who they'd vote for in a hypothetical P vs. O election
+\\end{quote}
+
+- \\textcolor{blue}{What variables should we measure?}
+
+\\begin{quote}
+Past vote history, demographics, political knowledge, and political attention
+\\end{quote}
+
+")
+}
+```
+
+
+## Bundled Treatments
+
+- To find a causal effect, you need to **isolate** your explanatory
+  variable from your outcome.
+- If your treatment actually bundles *multiple* things together, how
+  do you know which part is doing the work?
+  - Is it the **populism**? Or the **policies**?
+- Solution: split the bundle across multiple treatment arms.
+  - Populism treatment (previous slide)
+  - Policies only, no populist framing
+  - Control group
+- Compare the bundled treatment to the "policies only" arm to
+  isolate the effect of populist rhetoric *itself*.
+
+
+```{r attendance, results='asis', echo=FALSE}
+if (params$show_answers) {
+  cat(paste0("
+## Attendance Survey
+
+\\begin{center}
+\\includegraphics[width=0.45\\textwidth]{", qr_image, "}
+\\end{center}
+"))
+}
+```
+
+## Practice Coding Exercise 1
+
+- Note: \textit{This is a harder exercise than we have done in class or in the problem set before.}
+
+\pause
+
+- Using the data set on persuasion and voting from Wednesday in `Week5_Sandbox1.ipynb`
+
+
+
+- What is the turnout percentage for each treatment? (Civic Duty, Hawthorne, Self, and Neighbors)
+
+
+
+## Answer: Coding Exercise 1 {.fragile}
+
+\footnotesize
+```{r answer-data, echo=TRUE, eval=params$show_answers, include=params$show_answers}
+civic.data <- subset(social, treat_civic == 1)
+hawthorne.data <- subset(social, treat_hawthorne == 1)
+self.data <- subset(social, treat_self == 1)
+neighbors.data <- subset(social, treat_neighbors == 1)
+```
+
+```{r answer-q1-method1, echo=TRUE, eval=params$show_answers, include=params$show_answers}
+civic.turnout <- mean(civic.data$outcome_voted)
+hawthorne.turnout <- mean(hawthorne.data$outcome_voted)
+self.turnout <- mean(self.data$outcome_voted)
+neighbors.turnout <- mean(neighbors.data$outcome_voted)
+
+c(civic.turnout, hawthorne.turnout, self.turnout, neighbors.turnout)
+```
+
+## Answer: Coding Exercise 1 {.fragile}
+
+We could also do it all in one step:
+
+\footnotesize
+```{r answer-q1-method2, echo=TRUE, eval=params$show_answers, include=params$show_answers}
+civic.turnout <- mean(subset(social, treat_civic == 1)$outcome_voted)
+hawthorne.turnout <- mean(subset(social, treat_hawthorne == 1)$outcome_voted)
+self.turnout <- mean(subset(social, treat_self == 1)$outcome_voted)
+neighbors.turnout <- mean(subset(social, treat_neighbors == 1)$outcome_voted)
+
+c(civic.turnout, hawthorne.turnout, self.turnout, neighbors.turnout)
+```
+
+
+
+## Practice Coding Exercise 2: Random Assignment
+
+In the in-class activity we checked if age differed between the Neighbors and Control groups.
+
+Does voter-history (`g2000`, `g2002`, `p2004`) differ by treatment assignment?
+
+\small That is, what is the turnout rate for each election across the 4 treatments and control group?
+
+What does this tell us about random assignment?
+
+
+## Practice Coding Exercise 2: Answers {.fragile}
+
+Remember how we subset the data before:
+
+```{r answer-q2, echo=TRUE, include=params$show_answers}
+civic.data <- subset(social, treat_civic == 1)
+hawthorne.data <- subset(social, treat_hawthorne == 1)
+self.data <- subset(social, treat_self == 1)
+neighbors.data <- subset(social, treat_neighbors == 1)
+```
+
+\textcolor{blue}{Why did we need to do this for this problem as well?}
+
+\pause
+
+Because we wanted to know treatment assignment across several groups.
+
+
+## g2000 Random Assignment {.fragile}
+
+:::::::::::::: {.columns}
+::: {.column width="50%"}
+```{r, echo=TRUE, include=params$show_answers}
+table(civic.data$g2000)
+table(hawthorne.data$g2000)
+```
+:::
+::: {.column width="50%"}
+```{r, echo=TRUE, include=params$show_answers}
+table(self.data$g2000)
+table(neighbors.data$g2000)
+```
+:::
+::::::::::::::
+
+\vspace{1.5em}
+
+\textcolor{blue}{What does this mean?}
+
+\pause
+
+There are similar values across each condition which means random assignment of treatment likely worked
+
+## g2002 Random Assignment {.fragile}
+
+:::::::::::::: {.columns}
+::: {.column width="50%"}
+```{r, echo=TRUE, include=params$show_answers}
+table(civic.data$g2002)
+table(hawthorne.data$g2002)
+```
+:::
+::: {.column width="50%"}
+```{r, echo=TRUE, include=params$show_answers}
+table(self.data$g2002)
+table(neighbors.data$g2002)
+```
+:::
+::::::::::::::
+
+## p2004 Random Assignment {.fragile}
+
+:::::::::::::: {.columns}
+::: {.column width="50%"}
+```{r, echo=TRUE, include=params$show_answers}
+table(civic.data$p2004)
+table(hawthorne.data$p2004)
+```
+:::
+::: {.column width="50%"}
+```{r, echo=TRUE, include=params$show_answers}
+table(self.data$p2004)
+table(neighbors.data$p2004)
+```
+:::
+::::::::::::::
+
+
+## Acknowledgements
+
+- Special thanks to Will Halm and prior GSIs for providing materials off of which some of these slides are based.
