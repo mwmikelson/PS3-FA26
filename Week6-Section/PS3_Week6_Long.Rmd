@@ -1,0 +1,330 @@
+---
+title: "PS 3: Week 6"
+subtitle: "Quantifying Uncertainty"
+output:
+  beamer_presentation:
+    theme: "Madrid"
+    colortheme: "default"
+    slide_level: 2
+fontsize: 11pt
+params:
+  show_answers: true
+header-includes:
+  - \usepackage{xcolor}
+  - \newcommand{\hlred}[1]{\colorbox{red!20}{#1}}
+  - \newcommand{\hlblue}[1]{\colorbox{blue!15}{#1}}
+  - \setbeamertemplate{navigation symbols}{}
+  - \usepackage{tikz}
+  - \usepackage{subcaption}
+  - \definecolor{targetred}{HTML}{EA5B5D}
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, eval = TRUE, comment = "#>", size = "small")
+
+# Change this filename each week to that week's QR code image.
+# Just drop the image file in the same folder as this .Rmd.
+qr_image <- "qr-code-4.png"
+```
+
+## Agenda
+
+1. Opening Exercise: Interpreting Data
+2. Bias vs. Noise
+3. Standard Errors
+4. P-Values
+
+## An Interpretation
+
+Imagine an experiment with two treatments, Treatment 1 and Treatment 2. The outcome is a binary measure of vote choice: whether one votes for Party A. Participants are randomly assigned to T1, T2, or the control (no treatment).
+
+40% of the control group votes for Party A, 45% of those in T1 vote for Party A, and 50% of those in T2 vote for Party A.
+
+\small
+**My interpretation:** Participants under Treatment 1 were 5-percentage points more likely to vote for Party A than those in the control. Participants under Treatment 2 were 10-percentage points more likely to vote for Party A than the control. These results prove that both treatments would increase vote choice for Party A among the general population. Treatment 2 would also be the more effective treatment at increasing Party A's vote choice if we ran this study again.
+
+\normalsize
+**What's wrong with this interpretation? What's correct about it?**
+
+::: notes
+It depends! My point is that we know, for this sample, the effect was that large. But we need a way of showing that this effect is particularly large.
+:::
+
+## What Do We Know?
+
+\small
+
+- In this sample, Treatment 1 increased vote for Party A by 5-percentage points relative to the control
+- In this sample, Treatment 2 increased vote for Party A by 10-percentage points relative to the control
+- In this sample, Treatment 2 increased vote for Party A by 5-percentage points more than Treatment 1 did relative to the control
+- In short, we know we have an average treatment effect, but we don't know the true treatment effect
+    - We never see everyone's outcomes on both treatments and control! Just on one assignment!
+    - So we sampled participants and then randomly assigned treatment/control within our sample
+    - What if we had sampled different participants? What if we had assigned treatment differently?
+- We need a way to measure how confident we are that the findings in this study represent a true average treatment effect.
+    - We can never prove that they do, but we can increase our confidence that what we found is not a coincidence.
+
+## Bias
+
+- Bias is a systematic deviation from the truth
+- You can think of bias as a consistent inaccuracy
+- You've already seen bias!
+- Similar to bias in a colloquial sense:
+    - If the judicial system is racially biased, it will be consistently discriminatory
+    - If I have a biased point of view, I will automatically come to the same conclusion regardless of the evidence you present to me
+    - If we have a biased way of researching our topic of interest, we will end up at the same (wrong) conclusion
+
+##
+
+```{r, out.height="0.85\\textheight", fig.align="center"}
+knitr::include_graphics("images/sampling_bias.png")
+```
+
+## Noise
+
+- Noise is simply the random difference between samples
+- Noise is inevitable when sampling -- we don't have the true population
+- This was our concern with the opening example!
+
+## The 1936 Election: Landon vs Roosevelt
+
+- Literary Digest did one of the largest political polls (at the time) asking 2.4 million people who would win the 1936 presidential election
+    - Their prediction: \hlred{Landon = 57\%} vs \hlblue{Roosevelt = 43\%}
+- Their method: Ask 10 million people on telephone lists, magazine subscription lists, club and association rosters, to fill out a mock ballot
+
+\vspace{0.5em}
+\centering
+In reality: \hlred{Landon = 38\%} vs \hlblue{Roosevelt = 62\%}
+
+\vspace{0.5em}
+```{r, out.height="0.28\\textheight", fig.show="hold", fig.align="center"}
+knitr::include_graphics(c("images/landon.jpg", "images/roosevelt.jpg"))
+```
+
+::: notes
+Bias insofar as who was sampled; noise insofar as any poll has noise.
+:::
+
+
+## Bias vs. Noise
+
+Bias can also be thought of as Inaccuracy; Noise can be thought of as Imprecision
+
+\begin{figure}
+    \centering
+    % Target 1: Low Bias, Low Noise
+    \begin{subfigure}[b]{0.23\textwidth}
+        \centering
+        \begin{tikzpicture}[scale=0.38, transform shape]
+            \fill[targetred] (0,0) circle (2cm);
+            \fill[white] (0,0) circle (1.3cm);
+            \fill[targetred] (0,0) circle (0.6cm);
+            \tikzset{cross/.pic = {
+                \draw[line width=1.5pt] (-0.12,-0.12) -- (0.12,0.12);
+                \draw[line width=1.5pt] (-0.12,0.12) -- (0.12,-0.12);
+            }}
+            \pic at (0, 0.25) {cross};
+            \pic at (-0.25, 0.05) {cross};
+            \pic at (0.25, 0.1) {cross};
+            \pic at (-0.15, -0.2) {cross};
+            \pic at (0.15, -0.3) {cross};
+        \end{tikzpicture}
+        \caption*{Low Bias\\Low Noise}
+        \label{fig:low_bias_low_noise}
+    \end{subfigure}
+    \hfill
+    % Target 2: Low Bias, High Noise
+    \begin{subfigure}[b]{0.23\textwidth}
+        \centering
+        \begin{tikzpicture}[scale=0.38, transform shape]
+            \fill[targetred] (0,0) circle (2cm);
+            \fill[white] (0,0) circle (1.3cm);
+            \fill[targetred] (0,0) circle (0.6cm);
+            \tikzset{cross/.pic = {
+                \draw[line width=1.5pt] (-0.12,-0.12) -- (0.12,0.12);
+                \draw[line width=1.5pt] (-0.12,0.12) -- (0.12,-0.12);
+            }}
+            \pic at (0.1, -0.1) {cross};
+            \pic at (-0.6, 0.9) {cross};
+            \pic at (1.6, 0.6) {cross};
+            \pic at (-1.4, -1.2) {cross};
+            \pic at (0.7, -0.8) {cross};
+        \end{tikzpicture}
+        \caption*{Low Bias\\High Noise}
+        \label{fig:low_bias_high_noise}
+    \end{subfigure}
+    \hfill
+    % Target 3: High Bias, Low Noise
+    \begin{subfigure}[b]{0.23\textwidth}
+        \centering
+        \begin{tikzpicture}[scale=0.38, transform shape]
+            \fill[targetred] (0,0) circle (2cm);
+            \fill[white] (0,0) circle (1.3cm);
+            \fill[targetred] (0,0) circle (0.6cm);
+            \tikzset{cross/.pic = {
+                \draw[line width=1.5pt] (-0.12,-0.12) -- (0.12,0.12);
+                \draw[line width=1.5pt] (-0.12,0.12) -- (0.12,-0.12);
+            }}
+            \pic at (-1.2, -0.9) {cross};
+            \pic at (-0.9, -1.2) {cross};
+            \pic at (-1.1, -1.4) {cross};
+            \pic at (-1.4, -1.1) {cross};
+            \pic at (-1.3, -1.5) {cross};
+        \end{tikzpicture}
+        \caption*{High Bias\\Low Noise}
+        \label{fig:high_bias_low_noise}
+    \end{subfigure}
+    \hfill
+    % Target 4: High Bias, High Noise
+    \begin{subfigure}[b]{0.23\textwidth}
+        \centering
+        \begin{tikzpicture}[scale=0.38, transform shape]
+            \fill[targetred] (0,0) circle (2cm);
+            \fill[white] (0,0) circle (1.3cm);
+            \fill[targetred] (0,0) circle (0.6cm);
+            \tikzset{cross/.pic = {
+                \draw[line width=1.5pt] (-0.12,-0.12) -- (0.12,0.12);
+                \draw[line width=1.5pt] (-0.12,0.12) -- (0.12,-0.12);
+            }}
+            \pic at (0, -0.2) {cross};
+            \pic at (-1.7, 0.1) {cross};
+            \pic at (-1.6, -0.9) {cross};
+            \pic at (-0.8, -1.7) {cross};
+            \pic at (0.2, -1.8) {cross};
+        \end{tikzpicture}
+        \caption*{High Bias\\High Noise}
+        \label{fig:high_bias_high_noise}
+    \end{subfigure}
+\end{figure}
+
+
+## 1. Standard Deviation
+
+A measure of "spread" -- summary of how much a set of values are away from the mean
+
+
+The formula is:
+$$
+\text{SD} = \sqrt{ \frac{\sum (x - \bar{x})^2}{n-1}}
+$$
+## Standard Deviation
+
+```{r, out.height="0.8\\textheight", fig.align="center"}
+knitr::include_graphics("images/sd_curves.png")
+```
+
+## 2. Standard Error
+
+- If we took a bunch of samples and measured a value for each, the standard error is the standard deviation of those values.
+- In other words, standard error is a measure of how much we'd expect our findings to vary if we could replicate our study thousands of times
+- Therefore, the standard error helps us measure how much we'd expect the estimate from the experiment to differ from the truth (the real effect) by chance
+- It is a measure of noise, not bias
+
+## Standard Error and its relationship to other sample statistics
+
+$$s_{\bar{x}} = \frac{s}{\sqrt{n}}$$
+
+- $n$ = Sample size (i.e., number of observations)
+- $s$ = Sample standard deviation
+- $s_{\bar{x}}$ = Estimated standard error of the mean ($s/\sqrt{n}$)
+
+::: notes
+Ask them what they think happens to the SE as the s or n increases.
+:::
+
+## Standard Error and its relationship to other sample statistics
+
+- It can only be positive
+- As the standard deviation increases, the SE increases
+    - Why?
+- As the sample size increases, the SE decreases
+    - Why?
+
+## 3. t-statistic
+
+$$t = \frac{\text{Estimate}}{\text{Standard Error}}$$
+
+- **t-statistic:** to measure how likely that an estimate of the size we saw would arise by chance, even if the treatment had no effect.
+- **Estimate:** our best guess of what the true ATE is.
+- If $t > 1.96$ or $t < -1.96$, the observed result is **statistically significant** (more in next weeks).
+
+```{r, out.width="\\textwidth", fig.align="center"}
+knitr::include_graphics("images/t_example_output.png")
+```
+
+## Interpreting T-Statistics
+
+```{r, out.width="\\textwidth", fig.align="center"}
+knitr::include_graphics("images/regression_output.png")
+```
+
+\small
+0.01857536 / 0.01099631 = 1.689236
+
+**A small estimate relative to a large standard error will result in a small t-statistic (and less confidence in the estimate being different from zero).**
+
+## Hypothesis Testing
+
+\small
+
+- In science we test hypotheses
+    - Ex: Autocracies are more likely than democracies to go to war
+- The **null hypothesis** is our default: what the world would look like if we did not observe the effect we are interested in finding
+    - Ex: Autocracies and democracies are equally likely to go to war
+- The **alternative hypothesis** reflects what we would observe if there was, actually, a true effect in the world
+    - Ex: Autocracies and democracies are not equally likely to go to war
+- We never prove one hypothesis or the other
+    - Because of noise (i.e. sampling), we can never be sure we're observing the truth
+    - But we can measure how likely we'd be to observe the effect we see by chance
+
+## P-Values
+
+\small
+
+- What's the probability that we would observe the effect we see by chance?
+    - A p-value of 0.13 means that there is a 13% probability that we would observe the effect we see even if the null hypothesis was true
+- We want to maximize our confidence that we are NOT observing the effect by chance
+    - A p-value of greater than (or equal to) 0.05 is considered statistically insignificant
+    - A p-value of less than 0.05 is statistically significant
+        - We are less than 5% likely to observe this effect by chance!
+        - OR: We are more than 95% likely to not be observing this effect by chance!
+- This gives us evidence in support of the alternative hypothesis but does not prove it
+
+## Interpreting P-Values
+
+```{r, out.width="\\textwidth", fig.align="center"}
+knitr::include_graphics("images/regression_output.png")
+```
+
+- The treatment increases the outcome by about 1.9 percentage-points relative to the control.
+- However, we would expect this result (or something smaller) to occur roughly 9% of the time if this effect was driven entirely by chance.
+
+
+```{r attendance, results='asis', echo=FALSE}
+if (params$show_answers) {
+  cat(paste0("
+## Attendance Survey
+
+\\begin{center}
+\\includegraphics[width=0.45\\textwidth]{", qr_image, "}
+\\end{center}
+"))
+}
+```
+
+## Recap
+
+\small
+
+- We want to show that our findings are not due to chance
+    - This arises from concerns about noise
+    - Different sampling methods and differences in randomization could lead to slightly different results
+- Standard errors show how much our results would vary across multiple versions of the same study
+    - How much "error" (difference) in our outcome should we expect across samples?
+- We test hypotheses to provide support for one vs. another
+    - We never provide definitive proof for any hypothesis!
+    - But p-values show us how probable our results would be if they arose due to chance and not due to a treatment effect
+
+
+## Acknowledgements
+
+Special thanks to prior GSIs for providing materials off of which some of these slides are based, especially Yue Lin and Ian Castro.

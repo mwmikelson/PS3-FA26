@@ -1,71 +1,95 @@
 ---
 title: "PS 3: Week 6"
 subtitle: "Quantifying Uncertainty"
+author: "Maya Mikelson"
 output:
   beamer_presentation:
-    theme: "default"
+    theme: "Madrid"
+    colortheme: "default"
     slide_level: 2
-    keep_tex: false
-    incremental: false
 fontsize: 11pt
+params:
+  show_answers: true
 header-includes:
   - \usepackage{xcolor}
   - \newcommand{\hlred}[1]{\colorbox{red!20}{#1}}
   - \newcommand{\hlblue}[1]{\colorbox{blue!15}{#1}}
   - \setbeamertemplate{navigation symbols}{}
+  - \usepackage{tikz}
+  - \usepackage{subcaption}
+  - \definecolor{targetred}{HTML}{EA5B5D}
+  - \usepackage{tikz}
+  - \usepackage{pgfplots}
+  - \pgfplotsset{compat=1.18}
+  - \definecolor{curveblue}{RGB}{16, 120, 200}
+  - \definecolor{cyangreen}{RGB}{0, 195, 160}
+  - \definecolor{cyanfill}{RGB}{232, 252, 248}
+  - \definecolor{pinkred}{RGB}{235, 30, 95}
+  - \definecolor{pinkfill}{RGB}{253, 235, 243}
+  - \definecolor{purpletext}{RGB}{125, 70, 210}
+  - \definecolor{purplefill}{RGB}{242, 238, 255}
 ---
-
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE)
+knitr::opts_chunk$set(echo = TRUE, eval = TRUE, comment = "#>", size = "small")
+
+# Change this filename each week to that week's QR code image.
+# Just drop the image file in the same folder as this .Rmd.
+qr_image <- "qr-code-4.png"
 ```
-
-## Attendance Survey
-
-**Fill out before the end of section!**
-
-<https://forms.gle/S66j3LNvyi8bUrdA6>
-
-::: notes
-Put at the end of the slides too
-:::
 
 ## Agenda
 
-1. Attendance Survey
-2. Opening Exercise: Interpreting Data
-3. Bias vs. Noise
-4. Standard Errors
-5. P-Values
+1. Bias vs. Noise
+2. Standard Errors
+3. P-Values
+4. Practice Exercise
 
-## An Interpretation
+## Reminders
 
-Imagine an experiment with two treatments, Treatment 1 and Treatment 2. The outcome is a binary measure of vote choice: whether one votes for Party A. Participants are randomly assigned to T1, T2, or the control (no treatment).
+- Problem Set 1 due today (Friday) at midnight
+   - Verify you submitted the right assignment. I have started grading some and some of them are a in-class assignment
 
-40% of the control group votes for Party A, 45% of those in T1 vote for Party A, and 50% of those in T2 vote for Party A.
+- Project Proposal due Monday at midnight
 
-\small
-**My interpretation:** Participants under Treatment 1 were 5-percentage points more likely to vote for Party A than those in the control. Participants under Treatment 2 were 10-percentage points more likely to vote for Party A than the control. These results prove that both treatments would increase vote choice for Party A among the general population. Treatment 2 would also be the more effective treatment at increasing Party A's vote choice if we ran this study again.
+- Midterm signup will go out Monday morning
 
-\normalsize
-**What's wrong with this interpretation? What's correct about it?**
+## Gradescope Error
 
-::: notes
-It depends! My point is that we know, for this sample, the effect was that large. But we need a way of showing that this effect is particularly large.
-:::
+If you ever see this error on a gradescope submission, do not hesitate to email. It is because the autograder failed for some reason and I can have it rerun.
 
-## What Do We Know?
+```{r, fig.align="center", out.width="100%", echo=FALSE}
+knitr::include_graphics("images/gradescope_error.png")
+```
 
-\small
+## Research Proposal Feedback
 
-- In this sample, Treatment 1 increased vote for Party A by 5-percentage points relative to the control
-- In this sample, Treatment 2 increased vote for Party A by 10-percentage points relative to the control
-- In this sample, Treatment 2 increased vote for Party A by 5-percentage points more than Treatment 1 did relative to the control
-- In short, we know we have an average treatment effect, but we don't know the true treatment effect
-    - We never see everyone's outcomes on both treatments and control! Just on one assignment!
-    - So we sampled participants and then randomly assigned treatment/control within our sample
-    - What if we had sampled different participants? What if we had assigned treatment differently?
-- We need a way to measure how confident we are that the findings in this study represent a true average treatment effect.
-    - We can never prove that they do, but we can increase our confidence that what we found is not a coincidence.
+Is the research question clear?
+
+\vspace{2em}
+
+Is it easy to tell if it is a causal/descriptive question?
+
+\vspace{2em}
+
+Is the data you are planning to collect well suited to answer the question?
+
+## Measuring Uncertainty
+
+Discuss:
+
+\begin{enumerate}
+\item \textcolor{blue}{Why do we care about measuring the uncertainty of an estimate? In other words, why just the difference in means not enough to make conclusions about the effect of a treatment?}
+\vspace{1em}
+\item \textcolor{blue}{What is the difference between noise and bias?}
+\end{enumerate}
+
+
+
+##
+
+```{r, fig.align="center", out.width="85%", echo=FALSE}
+knitr::include_graphics("images/sampling_bias.png")
+```
 
 ## Bias
 
@@ -77,54 +101,120 @@ It depends! My point is that we know, for this sample, the effect was that large
     - If I have a biased point of view, I will automatically come to the same conclusion regardless of the evidence you present to me
     - If we have a biased way of researching our topic of interest, we will end up at the same (wrong) conclusion
 
-##
-
-```{r, out.height="0.85\\textheight", fig.align="center"}
-knitr::include_graphics("images/sampling_bias.png")
-```
-
 ## Noise
 
 - Noise is simply the random difference between samples
 - Noise is inevitable when sampling -- we don't have the true population
-- This was our concern with the opening example!
 
-## The 1936 Election: Landon vs Roosevelt
+## Bias vs. Noise
 
-- Literary Digest did one of the largest political polls (at the time) asking 2.4 million people who would win the 1936 presidential election
-    - Their prediction: \hlred{Landon = 57\%} vs \hlblue{Roosevelt = 43\%}
-- Their method: Ask 10 million people on telephone lists, magazine subscription lists, club and association rosters, to fill out a mock ballot
+Bias can also be thought of as Inaccuracy
 
-\vspace{0.5em}
-\centering
-In reality: \hlred{Landon = 38\%} vs \hlblue{Roosevelt = 62\%}
+Noise can be thought of as Imprecision
 
-\vspace{0.5em}
-```{r, out.height="0.28\\textheight", fig.show="hold", fig.align="center"}
-knitr::include_graphics(c("images/landon.jpg", "images/roosevelt.jpg"))
-```
+\begin{figure}
+    \centering
+    % Target 1: Low Bias, Low Noise
+    \begin{subfigure}[b]{0.23\textwidth}
+        \centering
+        \begin{tikzpicture}[scale=0.38, transform shape]
+            \fill[targetred] (0,0) circle (2cm);
+            \fill[white] (0,0) circle (1.3cm);
+            \fill[targetred] (0,0) circle (0.6cm);
+            \tikzset{cross/.pic = {
+                \draw[line width=1.5pt] (-0.12,-0.12) -- (0.12,0.12);
+                \draw[line width=1.5pt] (-0.12,0.12) -- (0.12,-0.12);
+            }}
+            \pic at (0, 0.25) {cross};
+            \pic at (-0.25, 0.05) {cross};
+            \pic at (0.25, 0.1) {cross};
+            \pic at (-0.15, -0.2) {cross};
+            \pic at (0.15, -0.3) {cross};
+        \end{tikzpicture}
+        \caption*{Low Bias\\Low Noise}
+        \label{fig:low_bias_low_noise}
+    \end{subfigure}
+    \hfill
+    % Target 2: Low Bias, High Noise
+    \begin{subfigure}[b]{0.23\textwidth}
+        \centering
+        \begin{tikzpicture}[scale=0.38, transform shape]
+            \fill[targetred] (0,0) circle (2cm);
+            \fill[white] (0,0) circle (1.3cm);
+            \fill[targetred] (0,0) circle (0.6cm);
+            \tikzset{cross/.pic = {
+                \draw[line width=1.5pt] (-0.12,-0.12) -- (0.12,0.12);
+                \draw[line width=1.5pt] (-0.12,0.12) -- (0.12,-0.12);
+            }}
+            \pic at (0.1, -0.1) {cross};
+            \pic at (-0.6, 0.9) {cross};
+            \pic at (1.6, 0.6) {cross};
+            \pic at (-1.4, -1.2) {cross};
+            \pic at (0.7, -0.8) {cross};
+        \end{tikzpicture}
+        \caption*{Low Bias\\High Noise}
+        \label{fig:low_bias_high_noise}
+    \end{subfigure}
+    \hfill
+    % Target 3: High Bias, Low Noise
+    \begin{subfigure}[b]{0.23\textwidth}
+        \centering
+        \begin{tikzpicture}[scale=0.38, transform shape]
+            \fill[targetred] (0,0) circle (2cm);
+            \fill[white] (0,0) circle (1.3cm);
+            \fill[targetred] (0,0) circle (0.6cm);
+            \tikzset{cross/.pic = {
+                \draw[line width=1.5pt] (-0.12,-0.12) -- (0.12,0.12);
+                \draw[line width=1.5pt] (-0.12,0.12) -- (0.12,-0.12);
+            }}
+            \pic at (-1.2, -0.9) {cross};
+            \pic at (-0.9, -1.2) {cross};
+            \pic at (-1.1, -1.4) {cross};
+            \pic at (-1.4, -1.1) {cross};
+            \pic at (-1.3, -1.5) {cross};
+        \end{tikzpicture}
+        \caption*{High Bias\\Low Noise}
+        \label{fig:high_bias_low_noise}
+    \end{subfigure}
+    \hfill
+    % Target 4: High Bias, High Noise
+    \begin{subfigure}[b]{0.23\textwidth}
+        \centering
+        \begin{tikzpicture}[scale=0.38, transform shape]
+            \fill[targetred] (0,0) circle (2cm);
+            \fill[white] (0,0) circle (1.3cm);
+            \fill[targetred] (0,0) circle (0.6cm);
+            \tikzset{cross/.pic = {
+                \draw[line width=1.5pt] (-0.12,-0.12) -- (0.12,0.12);
+                \draw[line width=1.5pt] (-0.12,0.12) -- (0.12,-0.12);
+            }}
+            \pic at (0, -0.2) {cross};
+            \pic at (-1.7, 0.1) {cross};
+            \pic at (-1.6, -0.9) {cross};
+            \pic at (-0.8, -1.7) {cross};
+            \pic at (0.2, -1.8) {cross};
+        \end{tikzpicture}
+        \caption*{High Bias\\High Noise}
+        \label{fig:high_bias_high_noise}
+    \end{subfigure}
+\end{figure}
 
-::: notes
-Bias insofar as who was sampled; noise insofar as any poll has noise.
-:::
 
-## Bias = Inaccuracy; Noise = Imprecision
-
-```{r, out.width="\\textwidth", fig.align="center"}
-knitr::include_graphics("images/bias_noise_targets.jpg")
-```
 
 ## 1. Standard Deviation
 
 A measure of "spread" -- summary of how much a set of values are away from the mean
 
-```{r, out.height="0.4\\textheight", fig.align="center"}
-knitr::include_graphics("images/sd_formula.png")
-```
+
+The formula is:
+$$
+\text{SD} = \sqrt{ \frac{\sum (x - \bar{x})^2}{n-1}}
+$$
+
 
 ## Standard Deviation
 
-```{r, out.height="0.8\\textheight", fig.align="center"}
+```{r, fig.align="center", out.width="100%", echo=FALSE}
 knitr::include_graphics("images/sd_curves.png")
 ```
 
@@ -135,25 +225,30 @@ knitr::include_graphics("images/sd_curves.png")
 - Therefore, the standard error helps us measure how much we'd expect the estimate from the experiment to differ from the truth (the real effect) by chance
 - It is a measure of noise, not bias
 
-## Standard Error and its relationship to other sample statistics
+## Standard Error and other sample statistics
 
-$$s_{\bar{x}} = \frac{s}{\sqrt{n}}$$
+$$
+\text{Standard Error} = \sqrt{\frac{s^2_1}{n_1} + \frac{s^2_2}{n_2}}
+$$
 
 - $n$ = Sample size (i.e., number of observations)
 - $s$ = Sample standard deviation
 - $s_{\bar{x}}$ = Estimated standard error of the mean ($s/\sqrt{n}$)
 
-::: notes
-Ask them what they think happens to the SE as the s or n increases.
-:::
 
-## Standard Error and its relationship to other sample statistics
+## Standard Error other sample statistics
+
+$$
+\text{Standard Error} = \sqrt{\frac{s^2_1}{n_1} + \frac{s^2_2}{n_2}}
+$$
 
 - It can only be positive
-- As the standard deviation increases, the SE increases
-    - Why?
-- As the sample size increases, the SE decreases
-    - Why?
+- \textcolor{blue}{What do you think happens to the SE as $s$ or $n$ increases?}
+
+\pause
+
+As $s$ increases, the standard error will increase as well. As the spread of the population gets bigger (standard deviation), the actual sample that we get from it will also grow.
+
 
 ## 3. t-statistic
 
@@ -161,15 +256,81 @@ $$t = \frac{\text{Estimate}}{\text{Standard Error}}$$
 
 - **t-statistic:** to measure how likely that an estimate of the size we saw would arise by chance, even if the treatment had no effect.
 - **Estimate:** our best guess of what the true ATE is.
-- If $t > 1.96$ or $t < -1.96$, the observed result is **statistically significant** (more in next weeks).
+- If $t > 1.96$ or $t < -1.96$, the observed result is **statistically significant** (more next week).
 
-```{r, out.width="\\textwidth", fig.align="center"}
+```{r, fig.align="center", out.width="100%", echo=FALSE}
 knitr::include_graphics("images/t_example_output.png")
 ```
 
+## t-statistic: Why 1.96? {.fragile}
+
+\begin{center}
+\begin{tikzpicture}
+\begin{axis}[
+  no markers,
+  domain=-4:4,
+  samples=200,
+  axis x line=bottom,
+  height=6.5cm,
+  width=11.5cm,
+  xmin=-4.2, xmax=4.2,
+  ymin=0, ymax=0.43,
+  clip=false,
+  xtick={-4,-3,-2,-1,0,1,2,3,4},
+  xticklabels={$-4\sigma$,$-3\sigma$,$-2\sigma$,$-1\sigma$,$0$,$1\sigma$,$2\sigma$,$3\sigma$,$4\sigma$},
+  ticklabel style={font=\fontsize{7pt}{8pt}\selectfont\color{gray}},
+  axis line style={curveblue, thick},
+  hide y axis
+]
+
+  % Define Gaussian function
+  \pgfmathdeclarefunction{gauss}{2}{%
+    \pgfmathparse{1/(#2*sqrt(2*pi))*exp(-((x-#1)^2)/(2*#2^2))}%
+  }
+
+  % Fill Regions
+  \addplot [fill=purplefill, draw=none, domain=-4:-3] {gauss(0,1)} \closedcycle;
+  \addplot [fill=purplefill, draw=none, domain=3:4] {gauss(0,1)} \closedcycle;
+  \addplot [fill=purplefill, draw=none, domain=-3:-2] {gauss(0,1)} \closedcycle;
+  \addplot [fill=purplefill, draw=none, domain=2:3] {gauss(0,1)} \closedcycle;
+  \addplot [fill=pinkfill, draw=none, domain=-2:-1] {gauss(0,1)} \closedcycle;
+  \addplot [fill=pinkfill, draw=none, domain=1:2] {gauss(0,1)} \closedcycle;
+  \addplot [fill=cyanfill, draw=none, domain=-1:1] {gauss(0,1)} \closedcycle;
+
+  % Vertical Boundary Lines
+  \draw [cyangreen, semithick] (axis cs:0,0) -- (axis cs:0, 0.3989);
+  \draw [cyangreen, semithick] (axis cs:-1,0) -- (axis cs:-1, 0.2420);
+  \draw [cyangreen, semithick] (axis cs:1,0) -- (axis cs:1, 0.2420);
+  \draw [pinkred, semithick] (axis cs:-2,0) -- (axis cs:-2, 0.0540);
+  \draw [pinkred, semithick] (axis cs:2,0) -- (axis cs:2, 0.0540);
+  \draw [purpletext, semithick] (axis cs:-3,0) -- (axis cs:-3, 0.0044);
+  \draw [purpletext, semithick] (axis cs:3,0) -- (axis cs:3, 0.0044);
+
+  % Bell Curve Line
+  \addplot [curveblue, thick, domain=-4:4] {gauss(0,1)};
+
+  % Percentage Labels (Adjust point sizes here: \fontsize{FONT_SIZE}{LINE_SPACING}\selectfont)
+  \node [font=\fontsize{7.5pt}{9pt}\selectfont\bfseries, color=cyangreen] at (axis cs:-0.5, 0.15) {34.13\%};
+  \node [font=\fontsize{7.5pt}{9pt}\selectfont\bfseries, color=cyangreen] at (axis cs:0.5, 0.15) {34.13\%};
+  \node [font=\fontsize{7.5pt}{9pt}\selectfont\bfseries, color=pinkred] at (axis cs:-1.5, 0.035) {13.59\%};
+  \node [font=\fontsize{7.5pt}{9pt}\selectfont\bfseries, color=pinkred] at (axis cs:1.5, 0.035) {13.59\%};
+  \node [font=\fontsize{7.5pt}{9pt}\selectfont\bfseries, color=purpletext] at (axis cs:-2.5, 0.05) {2.14\%};
+  \node [font=\fontsize{7.5pt}{9pt}\selectfont\bfseries, color=purpletext] at (axis cs:2.5, 0.05) {2.14\%};
+
+  % 95% Confidence Interval Line Below X-Axis
+  \draw [thick, curveblue] (axis cs:-1.96, -0.07) -- (axis cs:1.96, -0.07);
+  \draw [thick, curveblue] (axis cs:-1.96, -0.055) -- (axis cs:-1.96, -0.085);
+  \draw [thick, curveblue] (axis cs:1.96, -0.055) -- (axis cs:1.96, -0.085);
+  \node [font=\fontsize{7.5pt}{9pt}\selectfont\bfseries, color=curveblue, below] at (axis cs:0, -0.07) {95\% of data ($\pm 1.96\sigma$)};
+
+\end{axis}
+\end{tikzpicture}
+\end{center}}
+
+
 ## Interpreting T-Statistics
 
-```{r, out.width="\\textwidth", fig.align="center"}
+```{r, fig.align="center", out.width="100%", echo=FALSE}
 knitr::include_graphics("images/regression_output.png")
 ```
 
@@ -207,12 +368,50 @@ knitr::include_graphics("images/regression_output.png")
 
 ## Interpreting P-Values
 
-```{r, out.width="\\textwidth", fig.align="center"}
+```{r, fig.align="center", out.width="100%", echo=FALSE}
 knitr::include_graphics("images/regression_output.png")
 ```
 
 - The treatment increases the outcome by about 1.9 percentage-points relative to the control.
 - However, we would expect this result (or something smaller) to occur roughly 9% of the time if this effect was driven entirely by chance.
+
+
+```{r attendance, results='asis', echo=FALSE}
+if (params$show_answers) {
+  cat(paste0("
+## Attendance Survey
+
+\\begin{center}
+\\includegraphics[width=0.45\\textwidth]{", qr_image, "}
+\\end{center}
+"))
+}
+```
+
+## Exercises
+
+I have created a practice exercise for you to work through to give you more practice with `R` and a chance to determine the steps yourself and then implement it.
+
+\textbf{It is intended to be harder than the in-class assignments so don't be discouraged.}
+
+Go to the bCourses page $\rightarrow$ Section 6 $\rightarrow$ Week 6 Section Exercise
+
+\vspace{3em}
+
+I also have created \textit{optional} exercises that will teach you more `R` beyond what the class will cover. If you would prefer, you can also use this time to work on that.
+
+
+
+## Acknowledgements
+
+Special thanks to prior GSIs, Will Halm, and Tess Louie for providing materials off of which some of these slides are based.
+
+
+
+
+
+
+
 
 ## Recap
 
@@ -227,16 +426,53 @@ knitr::include_graphics("images/regression_output.png")
     - We never provide definitive proof for any hypothesis!
     - But p-values show us how probable our results would be if they arose due to chance and not due to a treatment effect
 
-## Attendance Survey
+## An Interpretation
 
-**Fill out before the end of section!**
+Imagine an experiment with two treatments, Treatment 1 and Treatment 2. The outcome is a binary measure of vote choice: whether one votes for Party A. Participants are randomly assigned to T1, T2, or the control (no treatment).
 
-<https://forms.gle/S66j3LNvyi8bUrdA6>
+40% of the control group votes for Party A, 45% of those in T1 vote for Party A, and 50% of those in T2 vote for Party A.
+
+\small
+**My interpretation:** Participants under Treatment 1 were 5-percentage points more likely to vote for Party A than those in the control. Participants under Treatment 2 were 10-percentage points more likely to vote for Party A than the control. These results prove that both treatments would increase vote choice for Party A among the general population. Treatment 2 would also be the more effective treatment at increasing Party A's vote choice if we ran this study again.
+
+\normalsize
+**What's wrong with this interpretation? What's correct about it?**
 
 ::: notes
-Put at the end of the slides too
+It depends! My point is that we know, for this sample, the effect was that large. But we need a way of showing that this effect is particularly large.
 :::
 
-## Acknowledgements
+## What Do We Know?
 
-Special thanks to prior GSIs for providing materials off of which some of these slides are based, especially Yue Lin and Ian Castro.
+\small
+
+- In this sample, Treatment 1 increased vote for Party A by 5-percentage points relative to the control
+- In this sample, Treatment 2 increased vote for Party A by 10-percentage points relative to the control
+- In this sample, Treatment 2 increased vote for Party A by 5-percentage points more than Treatment 1 did relative to the control
+- In short, we know we have an average treatment effect, but we don't know the true treatment effect
+    - We never see everyone's outcomes on both treatments and control! Just on one assignment!
+    - So we sampled participants and then randomly assigned treatment/control within our sample
+    - What if we had sampled different participants? What if we had assigned treatment differently?
+- We need a way to measure how confident we are that the findings in this study represent a true average treatment effect.
+    - We can never prove that they do, but we can increase our confidence that what we found is not a coincidence.
+
+
+
+## The 1936 Election: Landon vs Roosevelt
+
+- Literary Digest did one of the largest political polls (at the time) asking 2.4 million people who would win the 1936 presidential election
+    - Their prediction: \hlred{Landon = 57\%} vs \hlblue{Roosevelt = 43\%}
+- Their method: Ask 10 million people on telephone lists, magazine subscription lists, club and association rosters, to fill out a mock ballot
+
+\vspace{0.5em}
+\centering
+In reality: \hlred{Landon = 38\%} vs \hlblue{Roosevelt = 62\%}
+
+\vspace{0.5em}
+```{r, fig.align="center", out.width="100%", echo=FALSE}
+knitr::include_graphics(c("images/landon.jpg", "images/roosevelt.jpg"))
+```
+
+::: notes
+Bias insofar as who was sampled; noise insofar as any poll has noise.
+:::
