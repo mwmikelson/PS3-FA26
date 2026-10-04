@@ -2,30 +2,19 @@ test = list(
   name = "q8",
   cases = list(
     ottr::TestCase$new(
-      name = "q8.estimate",
-      failure_message = "q8.estimate should be the home-minus-away gap using all playoff games.",
+      name = "q8.sims-length",
+      failure_message = "q8.sims should be a vector of 1,000 numbers (one per shuffle).",
       code = {
-        testthat::expect_true(exists("q8.estimate"))
-        testthat::expect_true(is.numeric(q8.estimate) && length(q8.estimate) == 1)
-        testthat::expect_true(abs(as.numeric(q8.estimate) - 5.82022471910112) < 0.02)
+        testthat::expect_true(exists("q8.sims"))
+        testthat::expect_true(is.numeric(q8.sims) && length(q8.sims) == 1000)
       }
     ),
     ottr::TestCase$new(
-      name = "q8.se",
-      failure_message = "q8.se should be the standard error of the playoff estimate.",
+      name = "q8.sims-spread",
+      failure_message = "The spread of your shuffled estimates looks off. Did you shuffle the playoff games only?",
       code = {
-        testthat::expect_true(exists("q8.se"))
-        testthat::expect_true(is.numeric(q8.se) && length(q8.se) == 1)
-        testthat::expect_true(abs(as.numeric(q8.se) - 1.65801909719672) < 0.02)
-      }
-    ),
-    ottr::TestCase$new(
-      name = "q8.t",
-      failure_message = "q8.t should be the estimate divided by the standard error.",
-      code = {
-        testthat::expect_true(exists("q8.t"))
-        testthat::expect_true(is.numeric(q8.t) && length(q8.t) == 1)
-        testthat::expect_true(abs(as.numeric(q8.t) - 3.51034842055896) < 0.04)
+        testthat::expect_true(abs(mean(q8.sims)) < 0.35)
+        testthat::expect_true(sd(q8.sims) > 1.45 && sd(q8.sims) < 1.9)
       }
     )
   )

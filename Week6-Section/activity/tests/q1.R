@@ -2,30 +2,21 @@ test = list(
   name = "q1",
   cases = list(
     ottr::TestCase$new(
-      name = "q1.estimate",
-      failure_message = "q1.estimate should be a single number: the home-minus-away gap in points for 2023 regular-season games. Check your subset and which group is the baseline.",
+      name = "q1.dim-estimate",
+      failure_message = "The estimate in q1.dim doesn't look right. Check that you used 2023 regular-season games only, and that it is home minus away.",
       code = {
-        testthat::expect_true(exists("q1.estimate"))
-        testthat::expect_true(is.numeric(q1.estimate) && length(q1.estimate) == 1)
-        testthat::expect_true(abs(as.numeric(q1.estimate) - 1.52697095435686) < 0.01)
+        testthat::expect_true(exists("q1.dim"))
+        testthat::expect_true(is.list(q1.dim) && !is.null(q1.dim$coefficients) && !is.null(q1.dim$std.error), info = "Save the full difference_in_means() output in q1.dim.")
+        testthat::expect_true(abs(as.numeric(q1.dim$coefficients) - 1.52697095435686) < 0.01)
       }
     ),
     ottr::TestCase$new(
-      name = "q1.se",
-      failure_message = "q1.se should be the standard error of your estimate (the Std. Error column).",
+      name = "q1.dim-std.error",
+      failure_message = "The standard error in q1.dim doesn't look right. Check that you used 2023 regular-season games only.",
       code = {
-        testthat::expect_true(exists("q1.se"))
-        testthat::expect_true(is.numeric(q1.se) && length(q1.se) == 1)
-        testthat::expect_true(abs(as.numeric(q1.se) - 1.02841370079825) < 0.01)
-      }
-    ),
-    ottr::TestCase$new(
-      name = "q1.t",
-      failure_message = "q1.t should be the estimate divided by the standard error.",
-      code = {
-        testthat::expect_true(exists("q1.t"))
-        testthat::expect_true(is.numeric(q1.t) && length(q1.t) == 1)
-        testthat::expect_true(abs(as.numeric(q1.t) - 1.48478278067632) < 0.02)
+        testthat::expect_true(exists("q1.dim"))
+        testthat::expect_true(is.list(q1.dim) && !is.null(q1.dim$coefficients) && !is.null(q1.dim$std.error), info = "Save the full difference_in_means() output in q1.dim.")
+        testthat::expect_true(abs(as.numeric(q1.dim$std.error) - 1.02841370079825) < 0.01)
       }
     )
   )

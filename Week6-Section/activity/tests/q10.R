@@ -13,7 +13,7 @@ test = list(
       name = "q10-answer",
       failure_message = "Not quite. Reread the question and think about what you found above.",
       code = {
-        testthat::expect_equal(toupper(trimws(as.character(q10.answer))), "A")
+        testthat::expect_equal(toupper(trimws(as.character(q10.answer))), "D")
       }
     )
   )

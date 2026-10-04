@@ -2,19 +2,18 @@ test = list(
   name = "q9",
   cases = list(
     ottr::TestCase$new(
-      name = "q9.sims-length",
-      failure_message = "q9.sims should be a vector of 1,000 numbers.",
+      name = "q9-choice",
+      failure_message = "Pick one of the letters (text in quotes, such as the letter of your choice).",
       code = {
-        testthat::expect_true(exists("q9.sims"))
-        testthat::expect_true(is.numeric(q9.sims) && length(q9.sims) == 1000)
+        testthat::expect_true(exists("q9.answer"))
+        testthat::expect_true(toupper(trimws(as.character(q9.answer))) %in% c("A", "B", "C", "D"), info = "Set q9.answer to one of the letters.")
       }
     ),
     ottr::TestCase$new(
-      name = "q9.sims-spread",
-      failure_message = "The spread looks off. Did you shuffle the playoff games only?",
+      name = "q9-answer",
+      failure_message = "Not quite. Reread the question and think about what you found above.",
       code = {
-        testthat::expect_true(abs(mean(q9.sims)) < 0.35)
-        testthat::expect_true(sd(q9.sims) > 1.45 && sd(q9.sims) < 1.9)
+        testthat::expect_equal(toupper(trimws(as.character(q9.answer))), "A")
       }
     )
   )

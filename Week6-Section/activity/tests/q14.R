@@ -2,21 +2,18 @@ test = list(
   name = "q14",
   cases = list(
     ottr::TestCase$new(
-      name = "q14.reg",
-      failure_message = "q14.reg should be the home-minus-away difference in reg_win_pct among regular-season games.",
+      name = "q14-choice",
+      failure_message = "Pick one of the letters (text in quotes, such as the letter of your choice).",
       code = {
-        testthat::expect_true(exists("q14.reg"))
-        testthat::expect_true(is.numeric(q14.reg) && length(q14.reg) == 1)
-        testthat::expect_true(abs(as.numeric(q14.reg) - 0.000224902090038337) < 0.005)
+        testthat::expect_true(exists("q14.answer"))
+        testthat::expect_true(toupper(trimws(as.character(q14.answer))) %in% c("A", "B", "C", "D"), info = "Set q14.answer to one of the letters.")
       }
     ),
     ottr::TestCase$new(
-      name = "q14.po",
-      failure_message = "q14.po should be the home-minus-away difference in reg_win_pct among playoff games.",
+      name = "q14-answer",
+      failure_message = "Not quite. Reread the question and think about what you found above.",
       code = {
-        testthat::expect_true(exists("q14.po"))
-        testthat::expect_true(is.numeric(q14.po) && length(q14.po) == 1)
-        testthat::expect_true(abs(as.numeric(q14.po) - 0.0617968849539142) < 0.01)
+        testthat::expect_equal(toupper(trimws(as.character(q14.answer))), "C")
       }
     )
   )

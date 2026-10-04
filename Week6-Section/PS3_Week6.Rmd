@@ -30,8 +30,14 @@ header-includes:
   - \definecolor{purplefill}{RGB}{242, 238, 255}
 ---
 ```{r setup, include=FALSE}
+library(estimatr)
+library(dplyr)
+library(knitr)
+library(tidyverse)
 knitr::opts_chunk$set(echo = TRUE, eval = TRUE, comment = "#>", size = "small")
 
+
+lobbying <- read.csv("images/ps3_lobbying.csv")
 # Change this filename each week to that week's QR code image.
 # Just drop the image file in the same folder as this .Rmd.
 qr_image <- "qr-code-4.png"
@@ -46,12 +52,9 @@ qr_image <- "qr-code-4.png"
 
 ## Reminders
 
-- Problem Set 1 due today (Friday) at midnight
-   - Verify you submitted the right assignment. I have started grading some and some of them are a in-class assignment
-
 - Project Proposal due Monday at midnight
 
-- Midterm signup will go out Monday morning
+- Midterm signup opened this morning
 
 ## Gradescope Error
 
@@ -258,9 +261,13 @@ $$t = \frac{\text{Estimate}}{\text{Standard Error}}$$
 - **Estimate:** our best guess of what the true ATE is.
 - If $t > 1.96$ or $t < -1.96$, the observed result is **statistically significant** (more next week).
 
-```{r, fig.align="center", out.width="100%", echo=FALSE}
-knitr::include_graphics("images/t_example_output.png")
+\fontsize{8pt}{8pt}\selectfont
+
+```{r, eval=TRUE, echo=FALSE}
+difference_in_means(supportgroup ~ treat, data=lobbying, condition1="control", condition2="sociallobby")
 ```
+
+\normalsize
 
 ## t-statistic: Why 1.96? {.fragile}
 
@@ -330,14 +337,31 @@ knitr::include_graphics("images/t_example_output.png")
 
 ## Interpreting T-Statistics
 
-```{r, fig.align="center", out.width="100%", echo=FALSE}
-knitr::include_graphics("images/regression_output.png")
+\fontsize{8pt}{8pt}\selectfont
+
+```{r, eval=TRUE, echo=FALSE}
+difference_in_means(supportgroup ~ treat, data=lobbying, condition1="control", condition2="sociallobby")
 ```
 
-\small
-0.01857536 / 0.01099631 = 1.689236
+\normalsize
+
+$$
+t = \frac{\text{Estimate}}{\text{Standard Error}} = \frac{0.1161746}{0.07675608} = 1.513556
+$$
 
 **A small estimate relative to a large standard error will result in a small t-statistic (and less confidence in the estimate being different from zero).**
+
+```{r attendance, results='asis', echo=FALSE}
+if (params$show_answers) {
+  cat(paste0("
+## Attendance Survey
+
+\\begin{center}
+\\includegraphics[width=0.45\\textwidth]{", qr_image, "}
+\\end{center}
+"))
+}
+```
 
 ## Hypothesis Testing
 
@@ -375,18 +399,6 @@ knitr::include_graphics("images/regression_output.png")
 - The treatment increases the outcome by about 1.9 percentage-points relative to the control.
 - However, we would expect this result (or something smaller) to occur roughly 9% of the time if this effect was driven entirely by chance.
 
-
-```{r attendance, results='asis', echo=FALSE}
-if (params$show_answers) {
-  cat(paste0("
-## Attendance Survey
-
-\\begin{center}
-\\includegraphics[width=0.45\\textwidth]{", qr_image, "}
-\\end{center}
-"))
-}
-```
 
 ## Exercises
 

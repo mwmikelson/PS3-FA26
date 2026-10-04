@@ -2,18 +2,21 @@ test = list(
   name = "q7",
   cases = list(
     ottr::TestCase$new(
-      name = "q7-choice",
-      failure_message = "Pick one of the letters (text in quotes, such as the letter of your choice).",
+      name = "q7.dim-estimate",
+      failure_message = "The estimate in q7.dim doesn't look right. Check that you used playoff games only (all four seasons), and that it is home minus away.",
       code = {
-        testthat::expect_true(exists("q7.answer"))
-        testthat::expect_true(toupper(trimws(as.character(q7.answer))) %in% c("A", "B", "C", "D"), info = "Set q7.answer to one of the letters.")
+        testthat::expect_true(exists("q7.dim"))
+        testthat::expect_true(is.list(q7.dim) && !is.null(q7.dim$coefficients) && !is.null(q7.dim$std.error), info = "Save the full difference_in_means() output in q7.dim.")
+        testthat::expect_true(abs(as.numeric(q7.dim$coefficients) - 5.82022471910112) < 0.02)
       }
     ),
     ottr::TestCase$new(
-      name = "q7-answer",
-      failure_message = "Not quite. Reread the question and think about what you found above.",
+      name = "q7.dim-std.error",
+      failure_message = "The standard error in q7.dim doesn't look right. Check that you used playoff games only (all four seasons).",
       code = {
-        testthat::expect_equal(toupper(trimws(as.character(q7.answer))), "D")
+        testthat::expect_true(exists("q7.dim"))
+        testthat::expect_true(is.list(q7.dim) && !is.null(q7.dim$coefficients) && !is.null(q7.dim$std.error), info = "Save the full difference_in_means() output in q7.dim.")
+        testthat::expect_true(abs(as.numeric(q7.dim$std.error) - 1.65801909719672) < 0.02)
       }
     )
   )
