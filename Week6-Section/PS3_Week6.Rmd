@@ -404,9 +404,12 @@ knitr::include_graphics("images/regression_output.png")
 
 I have created a practice exercise for you to work through to give you more practice with `R` and a chance to determine the steps yourself and then implement it.
 
-\textbf{It is intended to be harder than the in-class assignments so don't be discouraged.}
+\begin{enumerate}
+\item \textbf{It is intended to be harder than the in-class assignments so don't be discouraged.}
+\item It is not graded but for your own practice
+\end{enumerate}
 
-Go to the bCourses page $\rightarrow$ Section 6 $\rightarrow$ Week 6 Section Exercise
+Go to the Section bCourses page $\rightarrow$ Section 6 $\rightarrow$ Week 6 Section Exercise
 
 \vspace{3em}
 
