@@ -5,12 +5,12 @@ test = list(
       name = "q14",
       code = {
         local({
-          raw <- readr::read_csv("ps3_bayarea_flights.csv", show_col_types = FALSE); d <- lubridate::mdy(raw$flight_date)
+          raw <- getOption("ps3_cache_raw"); d <- getOption("ps3_cache_d"); if (is.null(raw)) { raw <- purrr::map_dfr(list.files("ps3_flights", pattern = "\\.dta$", full.names = TRUE), haven::read_dta); d <- lubridate::mdy(raw$flight_date); options(ps3_cache_raw = raw, ps3_cache_d = d) }
           testthat::expect_true(exists("delay.year.airport"), info = "Save your answer as delay.year.airport")
           testthat::expect_true(all(c("year", "airport", "avg_dep_delay") %in% names(delay.year.airport)),
                                 info = "Need columns named year, airport, and avg_dep_delay")
-          testthat::expect_equal(nrow(delay.year.airport), 15,
-                                 info = "Expect 15 rows: 5 years x 3 airports (departing flights only)")
+          testthat::expect_equal(nrow(delay.year.airport), 10,
+                                 info = "Expect 10 rows: 5 years x 2 airports (departing flights only)")
           exp <- dplyr::tibble(year = as.numeric(lubridate::year(d)), airport = raw$airport,
                                direction = raw$direction, dep_delay = raw$dep_delay) %>%
             dplyr::filter(direction == "departing") %>%

@@ -5,7 +5,7 @@ test = list(
       name = "q8",
       code = {
         local({
-          raw <- readr::read_csv("ps3_bayarea_flights.csv", show_col_types = FALSE); d <- lubridate::mdy(raw$flight_date)
+          raw <- getOption("ps3_cache_raw"); d <- getOption("ps3_cache_d"); if (is.null(raw)) { raw <- purrr::map_dfr(list.files("ps3_flights", pattern = "\\.dta$", full.names = TRUE), haven::read_dta); d <- lubridate::mdy(raw$flight_date); options(ps3_cache_raw = raw, ps3_cache_d = d) }
           start <- lubridate::ymd("2020-03-19")
           keep  <- d >= start & d <= start + lubridate::days(30)
           testthat::expect_true(exists("after.order"), info = "Save your answer as after.order")

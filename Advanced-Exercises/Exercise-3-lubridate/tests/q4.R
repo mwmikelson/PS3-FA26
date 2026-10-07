@@ -5,7 +5,7 @@ test = list(
       name = "q4",
       code = {
         local({
-          raw <- readr::read_csv("ps3_bayarea_flights.csv", show_col_types = FALSE); d <- lubridate::mdy(raw$flight_date)
+          raw <- getOption("ps3_cache_raw"); d <- getOption("ps3_cache_d"); if (is.null(raw)) { raw <- purrr::map_dfr(list.files("ps3_flights", pattern = "\\.dta$", full.names = TRUE), haven::read_dta); d <- lubridate::mdy(raw$flight_date); options(ps3_cache_raw = raw, ps3_cache_d = d) }
           testthat::expect_true(exists("q4.flights"), info = "Save your answer as q4.flights")
           testthat::expect_true(all(c("year", "month", "day") %in% names(q4.flights)),
                                 info = "Need columns named year, month, and day")

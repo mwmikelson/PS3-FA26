@@ -5,7 +5,7 @@ test = list(
       name = "q16: lines by airport",
       code = {
         local({
-          raw <- readr::read_csv("ps3_bayarea_flights.csv", show_col_types = FALSE); d <- lubridate::mdy(raw$flight_date)
+          raw <- getOption("ps3_cache_raw"); d <- getOption("ps3_cache_d"); if (is.null(raw)) { raw <- purrr::map_dfr(list.files("ps3_flights", pattern = "\\.dta$", full.names = TRUE), haven::read_dta); d <- lubridate::mdy(raw$flight_date); options(ps3_cache_raw = raw, ps3_cache_d = d) }
           testthat::expect_true(exists("q16.plot"), info = "Save your plot as q16.plot")
           testthat::expect_s3_class(q16.plot, "ggplot")
           geoms <- sapply(q16.plot$layers, function(l) class(l$geom)[1])
@@ -14,7 +14,7 @@ test = list(
           testthat::expect_true(inherits(b$layout$panel_scales_x[[1]], "ScaleContinuousDate"),
                                 info = "The x-axis should be dates")
           ld <- b$data[[which(geoms == "GeomLine")[1]]]
-          testthat::expect_equal(length(unique(ld$colour)), 3, info = "Color the lines by airport (3 lines)")
+          testthat::expect_equal(length(unique(ld$colour)), 2, info = "Color the lines by airport (2 lines)")
           testthat::expect_equal(sum(ld$y), nrow(raw), info = "Each line should show flights per month for one airport")
         })
       }

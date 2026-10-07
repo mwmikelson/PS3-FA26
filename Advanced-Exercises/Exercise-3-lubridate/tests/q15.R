@@ -5,7 +5,7 @@ test = list(
       name = "q15",
       code = {
         local({
-          raw <- readr::read_csv("ps3_bayarea_flights.csv", show_col_types = FALSE); d <- lubridate::mdy(raw$flight_date)
+          raw <- getOption("ps3_cache_raw"); d <- getOption("ps3_cache_d"); if (is.null(raw)) { raw <- purrr::map_dfr(list.files("ps3_flights", pattern = "\\.dta$", full.names = TRUE), haven::read_dta); d <- lubridate::mdy(raw$flight_date); options(ps3_cache_raw = raw, ps3_cache_d = d) }
           t <- lubridate::mdy_hm(raw$sched_departure)
           testthat::expect_true(exists("flights.times"), info = "Save your answer as flights.times")
           testthat::expect_true(all(c("sched_dep", "dep_hour") %in% names(flights.times)),

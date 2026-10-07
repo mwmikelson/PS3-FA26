@@ -5,7 +5,7 @@ test = list(
       name = "q12",
       code = {
         local({
-          raw <- readr::read_csv("ps3_bayarea_flights.csv", show_col_types = FALSE); d <- lubridate::mdy(raw$flight_date)
+          raw <- getOption("ps3_cache_raw"); d <- getOption("ps3_cache_d"); if (is.null(raw)) { raw <- purrr::map_dfr(list.files("ps3_flights", pattern = "\\.dta$", full.names = TRUE), haven::read_dta); d <- lubridate::mdy(raw$flight_date); options(ps3_cache_raw = raw, ps3_cache_d = d) }
           testthat::expect_true(exists("flights.period"), info = "Save your answer as flights.period")
           testthat::expect_true("period" %in% names(flights.period), info = "The new column should be called period")
           exp <- dplyr::case_when(d < lubridate::ymd("2020-03-19") ~ "pre",

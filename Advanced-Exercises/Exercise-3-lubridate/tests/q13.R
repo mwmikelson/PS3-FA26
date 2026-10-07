@@ -5,7 +5,7 @@ test = list(
       name = "q13",
       code = {
         local({
-          raw <- readr::read_csv("ps3_bayarea_flights.csv", show_col_types = FALSE); d <- lubridate::mdy(raw$flight_date)
+          raw <- getOption("ps3_cache_raw"); d <- getOption("ps3_cache_d"); if (is.null(raw)) { raw <- purrr::map_dfr(list.files("ps3_flights", pattern = "\\.dta$", full.names = TRUE), haven::read_dta); d <- lubridate::mdy(raw$flight_date); options(ps3_cache_raw = raw, ps3_cache_d = d) }
           testthat::expect_true(exists("period.summary"), info = "Save your answer as period.summary")
           testthat::expect_true(all(c("period", "flights", "cancel_rate", "avg_dep_delay") %in% names(period.summary)),
                                 info = "Need columns named period, flights, cancel_rate, and avg_dep_delay")
