@@ -1,0 +1,176 @@
+---
+title: "PS 3: Week 9"
+subtitle: "From Samples to Populations"
+output:
+  beamer_presentation:
+    theme: "default"
+    slide_level: 2
+    incremental: false
+header-includes:
+  - \usepackage{booktabs}
+  - \setbeamertemplate{navigation symbols}{}
+  - \setbeamertemplate{footline}[frame number]
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+## Attendance Survey
+
+\begin{columns}[c]
+\begin{column}{0.55\textwidth}
+\begin{itemize}
+  \item \textbf{Fill out before the end of section!}
+  \begin{itemize}
+    \item \url{https://forms.gle/mtLZtKV9YDv3vqVk7}
+  \end{itemize}
+\end{itemize}
+\end{column}
+\begin{column}{0.4\textwidth}
+```{r, out.width="100%", fig.align="center"}
+knitr::include_graphics("images/attendance-qr.png")
+```
+\end{column}
+\end{columns}
+
+<!-- Notes: Put at the end of the slides too -->
+
+## Agenda
+
+1. Attendance Survey
+2. Generalizability and Weighting
+3. Descriptive Hypothesis Testing
+4. Mid-Semester Evals
+5. Group Projects
+
+## Housekeeping
+
+- Midterm
+- Final Projects
+    - Go over your ideas in groups and decide on a project
+    - Data collection is due **October 31st, 11:59 pm**
+
+## From Samples to Populations
+
+- **Experimental**
+    - We run an experiment exposing people to campaign materials and measure the effect of these materials on someone's likelihood of voting for our candidate
+        - How do we know this generalizes across cases?
+- **Descriptive**
+    - We run a poll measuring support for our candidate
+        - How do we know this generalizes across our population?
+
+## Weighting
+
+```{r weighting-table, results="asis"}
+grades <- data.frame(
+  Category = c("In-class assignments", "Problem sets", "Final project",
+               "Peer evaluations", "Section participation", "Midterm", "Final"),
+  Weights = c(0.15, 0.35, 0.15, 0.05, 0.05, 0.10, 0.15),
+  Grades = c(0.75, 0.95, 0.90, 1.00, 1.00, 0.90, 0.90)
+)
+grades$Weighted <- grades$Weights * grades$Grades
+
+tab <- data.frame(
+  Category = grades$Category,
+  Weight = sprintf("%.2f", grades$Weights),
+  `Soo's Grade` = sprintf("%.0f%%", grades$Grades * 100),
+  `Weighted Grade` = sprintf("%.2f%%", grades$Weighted * 100),
+  check.names = FALSE
+)
+tab <- rbind(tab, data.frame(
+  Category = "\\textbf{Total}", Weight = "", `Soo's Grade` = "",
+  `Weighted Grade` = sprintf("\\textbf{%.2f\\%%}", sum(grades$Weighted) * 100),
+  check.names = FALSE
+))
+
+knitr::kable(tab, format = "latex", booktabs = TRUE, escape = FALSE,
+             align = "lccc", linesep = "") |>
+  kableExtra::kable_styling(font_size = 9, latex_options = "HOLD_position")
+```
+
+\small Weighted grade = weight $\times$ grade, summed across categories.
+
+## Generalizing From Populations
+
+- We take samples from a population because we want to learn something about that population
+- But samples are always prone to some kind of sampling bias!
+    - **Sample selection bias:** who do we ask to take the survey?
+    - **Non-response bias:** what kind of people take (or don't take) political surveys?
+- And what about random chance?
+    - E.g. a sample I take on a Monday will be different from a sample I take on a Tuesday
+- You have the tools already to address both of these problems...
+
+## Descriptive Hypothesis Testing: Is this Random Chance?
+
+- We collected some data and found that Group A is different from Group B.
+    - Ex.: Younger voters support our candidate more than older voters.
+- There is still the same issue as before:
+    - Is the observed difference between Group A and Group B due to random chance (from sampling), or is it because the two groups truly are not the same?
+- Note: Our goal with this approach is to describe differences, **NOT** determine causality! We would need to do an experiment to prove that.
+    - Recall HTEs...
+
+## Descriptive Hypothesis Testing w/ Weights: Addressing Sampling Bias
+
+- Some people are more likely to answer our surveys/partake in our experiments than others
+    - We can weight groups that are underrepresented in our sample *more* to provide better balance in our data
+    - We can weight groups that are overrepresented in our sample *less* to provide better balance in our data
+    - Ex: if college-educated voters are overrepresented in our sample, they get a smaller weight; if non-college-educated voters are underrepresented in our sample, they get a bigger weight
+- Adding weights to our descriptive hypothesis tests can help us take into account sampling bias when comparing two groups
+
+## Group Projects -- Choosing a Project
+
+- Which proposal is the most feasible?
+- What's the most interesting to the most members?
+- General notes to consider once you've chosen a project:
+    - Make sure you have a "Prefer not to answer" or similar option for sensitive questions
+    - Consider adding additional variables for HTEs or descriptive hypothesis tests (more on that today...)
+
+## Group Projects -- Data Collection
+
+- **Non-survey-based**
+    - Upload as a CSV or Excel file
+    - Extensions allowed, but plan ahead!
+- **Survey-based**
+    - Instructions on how to make a Google Form are on the "Data Collection" assignment on bCourses, including how to randomize treatment/control
+- You're welcome to work on this during office hours!
+
+## Mid-Semester Course Evaluation
+
+\begin{columns}[c]
+\begin{column}{0.55\textwidth}
+\begin{itemize}
+  \item \textbf{Fill out now (or by the next section)}
+  \begin{itemize}
+    \item \url{https://forms.gle/Qsu3JFCbxu3RzxF6A}
+  \end{itemize}
+\end{itemize}
+\end{column}
+\begin{column}{0.4\textwidth}
+```{r, out.width="100%", fig.align="center"}
+knitr::include_graphics("images/evaluation-qr.png")
+```
+\end{column}
+\end{columns}
+
+## Attendance Survey
+
+\begin{columns}[c]
+\begin{column}{0.55\textwidth}
+\begin{itemize}
+  \item \textbf{Fill out before the end of section!}
+  \begin{itemize}
+    \item \url{https://forms.gle/mtLZtKV9YDv3vqVk7}
+  \end{itemize}
+\end{itemize}
+\end{column}
+\begin{column}{0.4\textwidth}
+```{r, out.width="100%", fig.align="center"}
+knitr::include_graphics("images/attendance-qr.png")
+```
+\end{column}
+\end{columns}
+
+## Acknowledgements
+
+Special thanks to prior GSIs for providing materials off of which some of these slides are based, especially Ian Castro.
