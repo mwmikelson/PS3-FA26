@@ -1,15 +1,15 @@
 library(testthat)
 
 test = list(
-  name = "q7",
+  name = "q12",
   cases = list(
     ottr::TestCase$new(
       hidden = FALSE,
       name = NA,
       points = 1,
       code = {
-        test_that("q7", {
-          expect_equal(q7.answer, "A")
+        test_that("q12", {
+          expect_equal(q12.answer, "A")
         })
       }
     )

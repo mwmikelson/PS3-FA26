@@ -1,19 +1,22 @@
+library(testthat)
+
 test = list(
   name = "q8",
   cases = list(
     ottr::TestCase$new(
-      name = "q8-choice",
-      failure_message = "Pick one of the letters (text in quotes, such as the letter of your choice).",
+      hidden = FALSE,
+      name = NA,
+      points = 1,
       code = {
-        testthat::expect_true(exists("q8.answer"))
-        testthat::expect_true(toupper(trimws(as.character(q8.answer))) %in% c("A", "B", "C", "D"), info = "Set q8.answer to one of the letters.")
-      }
-    ),
-    ottr::TestCase$new(
-      name = "q8-answer",
-      failure_message = "Not quite. Reread the question and think about what you found above.",
-      code = {
-        testthat::expect_equal(toupper(trimws(as.character(q8.answer))), "A")
+        test_that("q8: saved the full difference_in_means output", {
+          expect_true("difference_in_means" %in% class(q8.dim))
+        })
+        test_that("q8: estimate (check the subset, baseline, and subtraction order)", {
+          expect_equal(unname(q8.dim$coefficients), 15.73515, tolerance = 1e-3)
+        })
+        test_that("q8: standard error (check the subset)", {
+          expect_equal(unname(q8.dim$std.error), 26.9928, tolerance = 1e-3)
+        })
       }
     )
   )
