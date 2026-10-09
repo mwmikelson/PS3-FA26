@@ -1,53 +1,77 @@
 ---
 title: "PS 3: Week 7"
-subtitle: "P-Values and Confidence Intervals"
+subtitle: "P-Values"
+author: "Maya Mikelson"
 output:
   beamer_presentation:
-    theme: "default"
+    theme: "Madrid"
+    colortheme: "default"
     slide_level: 2
-    keep_tex: false
-    incremental: false
 fontsize: 11pt
+params:
+  show_answers: true
 header-includes:
+  - \usepackage{xcolor}
+  - \newcommand{\hlred}[1]{\colorbox{red!20}{#1}}
+  - \newcommand{\hlblue}[1]{\colorbox{blue!15}{#1}}
   - \setbeamertemplate{navigation symbols}{}
+  - \usepackage{tikz}
+  - \usepackage{subcaption}
+  - \definecolor{targetred}{HTML}{EA5B5D}
+  - \usepackage{tikz}
+  - \usepackage{pgfplots}
+  - \pgfplotsset{compat=1.18}
+  - \definecolor{curveblue}{RGB}{16, 120, 200}
+  - \definecolor{cyangreen}{RGB}{0, 195, 160}
+  - \definecolor{cyanfill}{RGB}{232, 252, 248}
+  - \definecolor{pinkred}{RGB}{235, 30, 95}
+  - \definecolor{pinkfill}{RGB}{253, 235, 243}
+  - \definecolor{purpletext}{RGB}{125, 70, 210}
+  - \definecolor{purplefill}{RGB}{242, 238, 255}
+  - \pgfmathdeclarefunction{gauss}{2}{\pgfmathparse{1/(#2*sqrt(2*pi))*exp(-((x-#1)^2)/(2*#2^2))}}
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE)
+knitr::opts_chunk$set(echo = FALSE, comment = "")
+
+# ---- EDIT THESE LINES once you have the lecture data -------------------
+data_file <- "lecture_data.csv"   # path to the dataset used for the slide 20-23 output
+# (if it is .dta use haven::read_dta(); if .rds use readRDS())
+# -------------------------------------------------------------------------
+
+data_ok <- file.exists(data_file) && requireNamespace("estimatr", quietly = TRUE)
+if (data_ok) {
+  library(estimatr)
+  dat <- read.csv(data_file)
+}
 ```
 
-## Attendance Survey
-
-**Fill out before the end of section!**
-
-<https://forms.gle/1kCBpom7MXxb9gDv6>
-
-```{r, out.height="0.4\\textheight", fig.align="center"}
-knitr::include_graphics("images/qr_attendance.png")
-```
-
-::: notes
-Put at the end of the slides too
-:::
 
 ## Agenda
 
-1. Attendance Survey
-2. Interpreting Data
+1. Example
+2. P-Values
 3. Midterm Review
-4. Reviewing P-Values
-5. Confidence Intervals
 
 ## Housekeeping
 
-- Problem Set Grading
-    - We will finish grading in the next few days or so
-- Project Proposals due
-    - Follow the rubric!
-- Problem Set #2 due next Friday by 11:59 pm.
-- Midterm coming up two weeks from now
+- Decide with your group what question to ask for the Final Project
+    - Survey is due October 23rd by 11:59 pm
+- Problem Set #2 due next October 16th by 11:59 pm
+- Midterm is October 19th-22nd
     - Study guide on bCourses
-    - If you're worried about your overall grade, see me!
+    
+## Example
+
+```{r, fig.align="center", out.width="100%", echo=FALSE}
+knitr::include_graphics("images/dog_study.png")
+```
+
+## Attendance
+
+```{r, fig.align="center", out.width="65%", echo=FALSE}
+knitr::include_graphics("images/qr_attendance.png")
+```
 
 ## How to Interpret Data
 
@@ -65,61 +89,68 @@ Put at the end of the slides too
 - If asked, provide a hypothetical alternative explanation or extrapolation from the data
     - Why might the data look the way they do?
     - Ex: this finding could be evidence of racial discrimination
-
-## Interpreting Data
-
-```{r, out.width="\\textwidth", fig.align="center"}
-knitr::include_graphics("images/q5_prompt.png")
-```
-
-\small
-**ANSWER:** Given the same request, Republican state legislators were, on average, about 8 percentage points less likely to respond to the Black Deshawn alias than to the White Jake alias.
-
-- Uses the answer from the previous question
-- Emphasizes that each treatment was the same except for one randomized difference (alias/race).
-- Identifies an **average** treatment effect
-- Contextualizes the interpretation in the study (Black vs. White alias)
-- Does not extrapolate from the data
-
-## Interpreting Data
-
-```{r, out.width="\\textwidth", fig.align="center"}
-knitr::include_graphics(c("images/q14_prompt.png"))
-```
-
-\vspace{1em}
-
-```{r, out.width="\\textwidth", fig.align="center"}
-knitr::include_graphics(c("images/q14_solution.png"))
-```
-
-## Midterm Review: Fill in the Blanks
-
-\footnotesize
-
-- \_\_\_\_\_ is when the way you collect data leads to a systematic inaccuracy in your results. One source of this could be \_\_\_\_\_\_\_\_.
-- \_\_\_\_\_ is the random difference that occurs across our samples.
-- Standard errors can be [negative only | positive only | only between 0 and 1].
-- A \_ statistic tells us how likely it is our observed effect would have arisen by chance. It can be [positive only | positive or negative]. We consider our estimate to be statistically significant if the \_ statistic is [how large?].
-- A \_ value tells us how likely we'd view the effect we see in our sample if it happened randomly, aka if our treatment had [some | no] effect. It can be [negative only | positive or negative | between 0 and 1]. We consider our estimate to be statistically significant if the \_ value is less than \_\_\_\_\_\_.
-- The \_\_\_\_ hypothesis is what we'd imagine would happen if our treatment had no effect. The \_\_\_\_ hypothesis is what we'd imagine if our treatment had some effect. We [prove one hypothesis | provide support for one hypothesis].
-
-## Midterm Review: Fill in the Blanks
-
-\footnotesize
-
-- **Bias** is when the way you collect data leads to a systematic inaccuracy in your results. One source of this could be [omitted variable bias | reverse causation | selection bias | sampling bias].
-- **Noise** is the random difference that occurs across our samples.
-- Standard errors can be **any positive value**.
-- A **t** statistic tells us how likely it is our observed effect would have arisen by chance. It can be **positive or negative**. We consider our estimate to be statistically significant if the t statistic is **greater than 1.96 or less than -1.96**.
-- A **p** value tells us how likely we'd view the effect we see in our sample if it happened randomly, aka if our treatment had **no** effect. It can be **between 0 and 1** (just like any probability). We consider our estimate to be statistically significant if the p value is less than **0.05**.
-- The **null** hypothesis is what we'd imagine would happen if our treatment had no effect. The **alternative** hypothesis is what we'd imagine if our treatment had some effect. We **provide support for one hypothesis**.
-
+    
 ## The relationship between T-statistics and P-Values
 
-```{r, out.height="0.75\\textheight", fig.align="center"}
-knitr::include_graphics("images/t_dist_plot.png")
-```
+
+\begin{center}
+\begin{tikzpicture}
+\begin{axis}[
+  no markers,
+  domain=-4:4,
+  samples=200,
+  axis x line=bottom,
+  height=6.5cm,
+  width=11.5cm,
+  xmin=-4.2, xmax=4.2,
+  ymin=0, ymax=0.43,
+  clip=false,
+  xtick={-4,-3,-2,-1,0,1,2,3,4},
+  xticklabels={$-4\sigma$,$-3\sigma$,$-2\sigma$,$-1\sigma$,$0$,$1\sigma$,$2\sigma$,$3\sigma$,$4\sigma$},
+  ticklabel style={font=\fontsize{7pt}{8pt}\selectfont\color{gray}},
+  axis line style={curveblue, thick},
+  hide y axis
+]
+
+  % Fill Regions
+  \addplot [fill=purplefill, draw=none, domain=-4:-3] {gauss(0,1)} \closedcycle;
+  \addplot [fill=purplefill, draw=none, domain=3:4] {gauss(0,1)} \closedcycle;
+  \addplot [fill=purplefill, draw=none, domain=-3:-2] {gauss(0,1)} \closedcycle;
+  \addplot [fill=purplefill, draw=none, domain=2:3] {gauss(0,1)} \closedcycle;
+  \addplot [fill=pinkfill, draw=none, domain=-2:-1] {gauss(0,1)} \closedcycle;
+  \addplot [fill=pinkfill, draw=none, domain=1:2] {gauss(0,1)} \closedcycle;
+  \addplot [fill=cyanfill, draw=none, domain=-1:1] {gauss(0,1)} \closedcycle;
+
+  % Vertical Boundary Lines
+  \draw [cyangreen, semithick] (axis cs:0,0) -- (axis cs:0, 0.3989);
+  \draw [cyangreen, semithick] (axis cs:-1,0) -- (axis cs:-1, 0.2420);
+  \draw [cyangreen, semithick] (axis cs:1,0) -- (axis cs:1, 0.2420);
+  \draw [pinkred, semithick] (axis cs:-2,0) -- (axis cs:-2, 0.0540);
+  \draw [pinkred, semithick] (axis cs:2,0) -- (axis cs:2, 0.0540);
+  \draw [purpletext, semithick] (axis cs:-3,0) -- (axis cs:-3, 0.0044);
+  \draw [purpletext, semithick] (axis cs:3,0) -- (axis cs:3, 0.0044);
+
+  % Bell Curve Line
+  \addplot [curveblue, thick, domain=-4:4] {gauss(0,1)};
+
+  % Percentage Labels (Adjust point sizes here: \fontsize{FONT_SIZE}{LINE_SPACING}\selectfont)
+  \node [font=\fontsize{7.5pt}{9pt}\selectfont\bfseries, color=cyangreen] at (axis cs:-0.5, 0.15) {34.13\%};
+  \node [font=\fontsize{7.5pt}{9pt}\selectfont\bfseries, color=cyangreen] at (axis cs:0.5, 0.15) {34.13\%};
+  \node [font=\fontsize{7.5pt}{9pt}\selectfont\bfseries, color=pinkred] at (axis cs:-1.5, 0.035) {13.59\%};
+  \node [font=\fontsize{7.5pt}{9pt}\selectfont\bfseries, color=pinkred] at (axis cs:1.5, 0.035) {13.59\%};
+  \node [font=\fontsize{7.5pt}{9pt}\selectfont\bfseries, color=purpletext] at (axis cs:-2.5, 0.05) {2.14\%};
+  \node [font=\fontsize{7.5pt}{9pt}\selectfont\bfseries, color=purpletext] at (axis cs:2.5, 0.05) {2.14\%};
+
+  % 95% Confidence Interval Line Below X-Axis
+  \draw [thick, curveblue] (axis cs:-1.96, -0.07) -- (axis cs:1.96, -0.07);
+  \draw [thick, curveblue] (axis cs:-1.96, -0.055) -- (axis cs:-1.96, -0.085);
+  \draw [thick, curveblue] (axis cs:1.96, -0.055) -- (axis cs:1.96, -0.085);
+  \node [font=\fontsize{7.5pt}{9pt}\selectfont\bfseries, color=curveblue, below] at (axis cs:0, -0.07) {95\% of data ($\pm 1.96\sigma$)};
+
+\end{axis}
+\end{tikzpicture}
+\end{center}
+
 
 ## P-Values: A Refresher
 
@@ -144,7 +175,13 @@ knitr::include_graphics("images/t_dist_plot.png")
 A few "scripts" that may be helpful:
 
 - If the treatment really had no effect, there is a \_\_\_% chance that we'd view an estimate as large or larger as we saw from our sample.
+
+\vspace{0.4em}
+
 - If the null hypothesis was true, there would be a \_\_\_% chance of viewing an estimate as large or larger as we saw from our sample.
+
+\vspace{0.4em}
+
 - There is a \_\_\_% chance of viewing an estimate as large or larger as we saw from our sample if the effect we see is occurring purely by chance/coincidence.
 
 ## Example of Interpreting a P-Value
@@ -153,7 +190,9 @@ A few "scripts" that may be helpful:
 
 A political campaign is trying to determine whether the proportion of registered voters in their district who support their candidate is significantly different from the overall national proportion of 50%. They conduct a survey by randomly sampling 1000 registered voters in their district and ask whether they support their candidate. They find that 540 out of the 1000 respondents support their candidate.
 
-You want to test whether the proportion of registered voters in the district who support the candidate is significantly different from the national proportion of 50%, you find that the p-value for this t-test is 0.031. Based on the results of the t-test and the p-value, what can the campaign conclude about the proportion of registered voters in the district who support their candidate?
+You want to test whether the proportion of registered voters in the district who support the candidate is significantly different from the national proportion of 50%, you find that the p-value for this t-test is 0.031. \textcolor{blue}{Based on the results of the t-test and the p-value, what can the campaign conclude about the proportion of registered voters in the district who support their candidate?}
+
+\pause
 
 **Example Answer:** Based on our sample, the proportion of voters who support the candidate is significantly different from 50%. If the null hypothesis was true and 50% of voters supported the candidate, there would be about a 3% chance that we'd view an estimate as large or larger as we saw from our sample.
 
@@ -161,133 +200,68 @@ You want to test whether the proportion of registered voters in the district who
 Based on our sample, the proportion of voters who support the candidate is significantly different from 50%. If the null hypothesis was true and 50% of voters supported the candidate, there would be about a 3% chance that we'd view an estimate as large or larger as we saw from our sample.
 :::
 
-## Confidence Intervals
 
-A confidence interval is a range of likely values for the "true" population parameter
+## Midterm Review: Fill in the Blanks
 
-\vspace{1em}
+\footnotesize
 
-Imagine we took a poll for Yes votes on Prop 50.
+- \textcolor{blue}{\_\_\_\_\_} is when the way you collect data leads to a systematic inaccuracy in your results. One source of this could be \textcolor{blue}{\_\_\_\_\_\_\_\_}.
 
-**Sample estimate: 53%**
+\vspace{0.4em}
 
-\vspace{1em}
+- \textcolor{blue}{\_\_\_\_\_} is the random difference that occurs across our samples.
 
-If you were a campaign manager for Prop 50, would you be confident that you'll win the election based on this data?
+\vspace{0.4em}
 
-## Confidence Intervals
+- Standard errors can be [\textcolor{blue}{negative only} | \textcolor{blue}{positive only} | \textcolor{blue}{only between 0 and 1}].
 
-A confidence interval is a range of possible values for the "true" population parameter
+\vspace{0.4em}
 
-\vspace{1em}
+- A \textcolor{blue}{\_\_\_\_} statistic tells us how likely it is our observed effect would have arisen by chance. It can be [\textcolor{blue}{positive only} | \textcolor{blue}{positive or negative}]. We consider our estimate to be statistically significant if the \textcolor{blue}{\_\_\_\_} statistic is [\textcolor{blue}{how large?}].
 
-Imagine we took a poll for Yes votes on Prop 50.
+\vspace{0.4em}
 
-**Sample estimate: 53%**
+- A \textcolor{blue}{\_\_\_\_} value tells us how likely we'd view the effect we see in our sample if it happened randomly, aka if our treatment had [some | no] effect. It can be [\textcolor{blue}{negative only} | \textcolor{blue}{positive or negative} | \textcolor{blue}{between 0 and 1}]. We consider our estimate to be statistically significant if the \textcolor{blue}{\_\_\_\_} value is less than \textcolor{blue}{\_\_\_\_\_\_}.
 
-**CI: [49%, 57%]**
+\vspace{0.4em}
 
-\vspace{1em}
+- The \textcolor{blue}{\_\_\_\_} hypothesis is what we'd imagine would happen if our treatment had no effect. The \textcolor{blue}{\_\_\_\_} hypothesis is what we'd imagine if our treatment had some effect. We [\textcolor{blue}{prove one hypothesis} | \textcolor{blue}{provide support for one hypothesis}].
 
-How about now? Do you still have the same opinion? Why or why not?
+## Midterm Review: Fill in the Blanks
 
-## Building Confidence Intervals
+\footnotesize
 
-- "Confidence" refers to the process of making confidence intervals
-    - If we made many intervals by taking many samples, 95% of the many intervals we create will "capture" the population parameter
-- Top of CI = Estimate + (1.96 $\times$ Standard Error)
-- Bottom of CI = Estimate $-$ (1.96 $\times$ Standard Error)
+- **Bias** is when the way you collect data leads to a systematic inaccuracy in your results. One source of this could be [omitted variable bias | reverse causation | selection bias | sampling bias].
 
-## Interpreting Confidence Intervals
+\vspace{0.4em}
 
-Two "scripts" (again):
+- **Noise** is the random difference that occurs across our samples.
 
-- If we were to do an experiment over and over again and calculate a 95% confidence interval for each study we run, 95% of those confidence intervals would contain the true average treatment effect.
-- There is a 95% chance of our confidence interval including the true average treatment effect.
+\vspace{0.4em}
 
-## Putting Confidence Intervals in Context
+- Standard errors can be **any positive value**.
 
-\small
+\vspace{0.4em}
 
-- You can think of the top of the confidence interval as our most optimistic guess about the size of the treatment effect, and the bottom of the confidence interval as our most pessimistic guess.
-- If the CI contains zero (or whatever the null hypothesis is), our findings are not statistically significant.
-- Because our CIs are a function of our estimates and their corresponding standard errors, these elements affect how wide our CIs are and around which value they are centered
-    - How do our confidence intervals change if the standard error changes?
-        - As SE increases, the CI gets wider; as SE decreases, the CI gets narrower
-    - How do our confidence intervals change if the estimate changes?
-        - This is the center of the CI and has nothing to do with the width (unless the standard error also changes).
-        - Ex: if your estimated effect was originally 5 and then doubled to 10, the new center of the CI would be 10, but its width would stay the same.
+- A **t-statistic** tells us how likely it is our observed effect would have arisen by chance. It can be **positive or negative**. We consider our estimate to be statistically significant if the t statistic is **greater than 1.96 or less than -1.96**.
 
-## Interpreting P-Values and CIs
+\vspace{0.4em}
 
-```{r, out.width="0.6\\textwidth", fig.align="center"}
-knitr::include_graphics("images/reg_est_se.png")
+- A **p** value tells us how likely we'd view the effect we see in our sample if it happened randomly, aka if our treatment had **no** effect. It can be **between 0 and 1** (just like any probability). We consider our estimate to be statistically significant if the p value is less than **0.05**.
+
+\vspace{0.4em}
+
+- The **null** hypothesis is what we'd imagine would happen if our treatment had no effect. The **alternative** hypothesis is what we'd imagine if our treatment had some effect. We **provide support for one hypothesis**.
+
+
+## Feedback Form
+
+```{r, fig.align="center", out.width="50%", echo=FALSE}
+knitr::include_graphics("images/feedback_form.png")
 ```
 
-- Interpret the estimate
-- Given the estimate and standard error, what can you predict about the significance of this estimate?
-- Example interpretation: Assuming the treatment was randomly assigned, it is our best guess that the treatment increased the outcome by around 1.86 percentage-points.
-
-## Interpreting P-Values and CIs
-
-```{r, out.width="0.75\\textwidth", fig.align="center"}
-knitr::include_graphics("images/reg_t.png")
-```
-
-- Interpret the t-statistic.
-- Example interpretation: Because the t-value is less than 1.96, the observed effect is not statistically significant, and we cannot reject the null hypothesis.
-
-## Interpreting P-Values and CIs
-
-```{r, out.width="0.9\\textwidth", fig.align="center"}
-knitr::include_graphics("images/reg_p.png")
-```
-
-- Interpret the p-value.
-- If we were to run this experiment over and over and the treatment had no effect, we would expect to see an estimate this size or larger around 9% of the time. Though our best guess is that the treatment is increasing the outcome, we cannot reject the null hypothesis given that the p-value is greater than 0.05.
-
-## Interpreting P-Values and CIs
-
-```{r, out.width="\\textwidth", fig.align="center"}
-knitr::include_graphics("images/reg_ci.png")
-```
-
-\small
-
-- What do the confidence intervals tell us about the likely range of true average treatment effects?
-- If we were to repeat this experiment many times and construct a 95% confidence interval each time, approximately 95% of those intervals would contain the true average treatment effect.
-- We are 95% confident that the true average treatment effect is between -0.003 and 0.040.
-- The treatment is unlikely to have decreased the outcome by more than 0.3 percentage-points.
-- The treatment is unlikely to have increased the outcome by more than 4 percentage-points.
-
-## Recap
-
-\small
-
-- We test hypotheses to provide support for one vs. another
-    - We never provide definitive proof for any hypothesis!
-    - But p-values show us how probable our results would be if they arose due to chance and not due to a treatment effect
-- T-statistics provide us with similar information to determine if our findings are statistically significant
-- Confidence intervals give us a range of likely values of the true average treatment effect
-    - If your p-value and t-statistic suggest an insignificant result, the confidence interval will contain zero
-- A t-statistic greater than 1.96 or less than -1.96, a p-value of less than 0.05, and a CI not containing zero (or whatever the null hypothesis is)
-    - We reject the null hypothesis that there is no treatment effect (or that there is no difference in the mean outcome for each group).
-    - Otherwise, we fail to reject the null hypothesis.
-
-## Attendance Survey
-
-**Fill out before the end of section!**
-
-<https://forms.gle/1kCBpom7MXxb9gDv6>
-
-```{r, out.height="0.4\\textheight", fig.align="center"}
-knitr::include_graphics("images/qr_attendance.png")
-```
-
-::: notes
-Put at the end of the slides too
-:::
+When you are done, there is an exercise on the Modules tab of the section bCourses page, under Week 7.
 
 ## Acknowledgements
 
-Special thanks to prior GSIs for providing materials off of which some of these slides are based, especially Rebekah Jones and Ian Castro.
+Special thanks to prior GSIs for providing materials off of which some of these slides are based, especially Will Halm.

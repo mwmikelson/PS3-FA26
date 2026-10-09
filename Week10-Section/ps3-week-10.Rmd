@@ -1,0 +1,218 @@
+---
+title: "PS 3: Week 10"
+subtitle: "Bivariate Relationships"
+output:
+  beamer_presentation:
+    theme: "default"
+    slide_level: 2
+    incremental: false
+header-includes:
+  - \setbeamertemplate{navigation symbols}{}
+  - \setbeamertemplate{footline}[frame number]
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+## Attendance Survey
+
+\begin{columns}[c]
+\begin{column}{0.55\textwidth}
+\begin{itemize}
+  \item \textbf{Fill out before the end of section!}
+  \begin{itemize}
+    \item \url{https://forms.gle/oLxHc54dZVgCQjqr7}
+  \end{itemize}
+\end{itemize}
+\end{column}
+\begin{column}{0.4\textwidth}
+```{r, out.width="100%", fig.align="center"}
+knitr::include_graphics("images/attendance-qr.png")
+```
+\end{column}
+\end{columns}
+
+<!-- Notes: Put at the end of the slides too -->
+
+## Agenda
+
+1. Attendance Survey
+2. Why Do We Visualize Data?
+3. Scatter Plots and the Line of Best Fit
+4. (Bivariate) Linear Regression
+5. Jupyter Example
+
+## Housekeeping
+
+- Survey design/non-survey data collected by **Friday at 11:59 pm**
+    - **Share the Google Form with me:** whalm@berkeley.edu
+- P-Set #3 due **next** Friday
+- Midterm grades
+- Mid-semester evaluations
+    - Lectures, activities, Kahoot
+    - You can always ask me to clarify what the question is asking
+
+## What is Johnny Doing?
+
+\footnotesize
+Johnny wants to know where Berkeley students stand on a proposal to replace Oski the Bear with Oscar the Grouch (pretend Berkeley wouldn't get sued for this). Following the advice of his excellent GSI, he decides to take a random sample of Berkeley students. He measures the students' support for this proposal on a 1 to 5 scale, where 1 represents strongly disagreeing with the proposal and 5 represents strongly agreeing to replace Oski with Oscar. He finds the mean support among underclassmen (freshmen and sophomores) is 4.2, while the mean support among upperclassmen (juniors and seniors) is 2.1. **He concludes that underclassmen like this idea because they don't know Oski as well whereas upperclassmen are loyal to Oski because they've been to more sports games throughout their time at Cal.**
+
+\normalsize
+What's wrong with Johnny's interpretation of the data?
+
+- Where are the measures of noise? Did this difference just happen by chance?
+- Why is he assuming causation without randomization?
+- And what if the relationship is actually driven by freshmen? Or seniors?
+
+<!-- Notes: Example of group project (kinda). What's wrong with it -- causality = discussion of our inability to randomize who is what year; oh and disag effects -->
+
+## Same means, same standard deviations... very different relationships
+
+```{r, out.width="85%", fig.align="center"}
+knitr::include_graphics("images/same-stats-scatterplots.png")
+```
+
+## Scatter plots
+
+\begin{columns}[c]
+\begin{column}{0.55\textwidth}
+\begin{itemize}
+  \item Scatter plots visualize \underline{two numerical variables} at once.
+  \item It allows us to see the relationship between the two variables.
+  \item As the IV (horizontal axis) changes, how does the DV (vertical axis) change?
+  \item We make scatterplots in R like this:
+\end{itemize}
+
+\texttt{qplot(x\_var, y\_var, data = dataset\_name)}
+\end{column}
+\begin{column}{0.42\textwidth}
+```{r, out.width="100%", fig.align="center"}
+knitr::include_graphics("images/scatter-plain.png")
+```
+\end{column}
+\end{columns}
+
+## The Line of Best Fit
+
+\begin{columns}[c]
+\begin{column}{0.55\textwidth}
+\begin{itemize}
+  \item Through the magic of algebra, we can explain the relationship between 2 variables in the form of a straight line
+  \begin{itemize}
+    \item \texttt{y = mx + b}
+  \end{itemize}
+\end{itemize}
+
+\texttt{predicted\_y = slope * x + intercept}
+
+\vspace{0.5em}
+To add the line to the scatterplot:
+
+\texttt{qplot(...) + geom\_smooth(method = 'lm')}
+
+\vspace{0.5em}
+Given the amount of time someone studies each week, what would we predict their grade to be on the final exam?
+\end{column}
+\begin{column}{0.42\textwidth}
+```{r, out.width="100%", fig.align="center"}
+knitr::include_graphics("images/scatter-line-of-best-fit.png")
+```
+\end{column}
+\end{columns}
+
+## Prediction line vs. actual data
+
+```{r, out.width="80%", fig.align="center"}
+knitr::include_graphics("images/regression-diagram.png")
+```
+
+Blue line = prediction (regression) line; orange dots = actual data
+
+## Finding the line of best fit in code
+
+\texttt{summary(lm(y.var \textasciitilde{} x.var, data = data\_name))}
+
+\begin{columns}[c]
+\begin{column}{0.3\textwidth}
+\small
+-21.86 = intercept, $b$
+
+1.217 = slope, $m$
+
+\vspace{1em}
+Therefore:
+
+$y = mx + b$
+
+$\text{pred}\_y = (1.217 \times x) - 21.86$
+\end{column}
+\begin{column}{0.68\textwidth}
+```{r, out.width="100%", fig.align="center"}
+knitr::include_graphics("images/lm-output.png")
+```
+\end{column}
+\end{columns}
+
+## What does linear regression tell us about the relationship?
+
+\begin{columns}[t]
+\begin{column}{0.48\textwidth}
+\underline{Slope ($m$):}
+\begin{itemize}
+  \item As our independent variable ($x$) increases by one, the dependent variable ($y$) tends to change by $m$ units on average.
+\end{itemize}
+\end{column}
+\begin{column}{0.48\textwidth}
+\underline{Intercept ($b$):}
+\begin{itemize}
+  \item If the independent variable ($x$) was zero, we would predict the dependent variable ($y$) to be $b$ units.
+  \begin{itemize}
+    \item Don't always interpret this literally!
+  \end{itemize}
+\end{itemize}
+\end{column}
+\end{columns}
+
+## Be CAREFUL when interpreting!
+
+\begin{columns}[c]
+\begin{column}{0.55\textwidth}
+\begin{itemize}
+  \item The line of best fit is giving us our best linear prediction \textbf{based on the data we have}
+  \begin{itemize}
+    \item That means it won't always translate to other data
+  \end{itemize}
+  \item Don't extrapolate: When there isn't any data, \textbf{don't extrapolate values.}
+\end{itemize}
+\end{column}
+\begin{column}{0.42\textwidth}
+```{r, out.width="100%", fig.align="center"}
+knitr::include_graphics("images/scatter-line-of-best-fit.png")
+```
+\end{column}
+\end{columns}
+
+## Jupyter Notebook Example
+
+## Attendance Survey
+
+\begin{columns}[c]
+\begin{column}{0.55\textwidth}
+\begin{itemize}
+  \item \textbf{Fill out before the end of section!}
+  \begin{itemize}
+    \item \url{https://forms.gle/oLxHc54dZVgCQjqr7}
+  \end{itemize}
+\end{itemize}
+\end{column}
+\begin{column}{0.4\textwidth}
+```{r, out.width="100%", fig.align="center"}
+knitr::include_graphics("images/attendance-qr.png")
+```
+\end{column}
+\end{columns}
+
+## Acknowledgements
+
+Special thanks to prior GSIs for providing materials off of which some of these slides are based, especially Ian Castro and Rebekah Jones.

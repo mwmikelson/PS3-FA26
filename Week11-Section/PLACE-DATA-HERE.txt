@@ -1,0 +1,7 @@
+DATA NEEDED (from lecture) -- save as CSV files in this folder:
+
+  marriage.csv    columns: marriage_opinion, marriage_perception
+  democrats.csv   columns: dem_us_house_percent_2020, spending_dem_ushouse_2020,
+                           clinton_percent_2016, dem_us_house_percent_2018
+
+Until these exist, the Rmd shows the original screenshots on those two slides.

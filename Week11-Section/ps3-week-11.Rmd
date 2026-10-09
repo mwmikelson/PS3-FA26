@@ -1,0 +1,305 @@
+---
+title: "PS 3: Week 11"
+subtitle: "Multiple Linear Regression"
+output:
+  beamer_presentation:
+    theme: "default"
+    slide_level: 2
+    incremental: false
+header-includes:
+  - \setbeamertemplate{navigation symbols}{}
+  - \setbeamertemplate{footline}[frame number]
+---
+
+<!--
+=====================================================================
+TODO -- DATA NEEDED (search for "DATA NEEDED" in this file)
+
+Two slides in the original deck used R output from lecture data that
+I don't have. The code is written to run once the files exist; until
+then, each slide falls back to the ORIGINAL screenshot so the deck
+still knits.
+
+1. Slide "Bivariate regression" (scatterplot)  -> variables
+   marriage_opinion (x) and marriage_perception (y).
+   Save the lecture dataset as: data/marriage.csv
+   (If the columns are named differently, edit the chunk
+   `marriage-plot` below.)
+
+2. Slide "Example output" (multiple regression) -> a data frame the
+   original called `democrats` (2020 US House Democratic candidates):
+   dem_us_house_percent_2020, spending_dem_ushouse_2020,
+   clinton_percent_2016, dem_us_house_percent_2018.
+   Save as: data/democrats.csv
+
+Everything else (added-variable plots) uses R's built-in mtcars data.
+Needs the `car` package: install.packages("car")
+=====================================================================
+-->
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+library(ggplot2)
+
+# lets a chunk shrink its output text via size="scriptsize"
+knitr::knit_hooks$set(size = function(before, options, envir) {
+  if (before) paste0("\\", options$size, "\n\n") else "\\normalsize\n\n"
+})
+
+# DATA NEEDED: put the lecture files in a data/ folder (see note at top).
+marriage_path  <- "data/marriage.csv"
+democrats_path <- "data/democrats.csv"
+
+has_marriage  <- file.exists(marriage_path)
+has_democrats <- file.exists(democrats_path)
+```
+
+## Attendance Survey
+
+\begin{columns}[c]
+\begin{column}{0.55\textwidth}
+\begin{itemize}
+  \item \textbf{Fill out before the end of section!}
+  \begin{itemize}
+    \item \url{https://forms.gle/CCZYNHBQ5Y8CvPiRA}
+  \end{itemize}
+\end{itemize}
+\end{column}
+\begin{column}{0.4\textwidth}
+```{r, out.width="100%", fig.align="center"}
+knitr::include_graphics("images/attendance-qr.png")
+```
+\end{column}
+\end{columns}
+
+<!-- Notes: Put at the end of the slides too -->
+
+## Agenda
+
+1. Attendance Survey
+2. Group Project Surveys!
+3. Reviewing Bivariate Regression
+4. Multiple Linear Regression
+5. Jupyter Example
+
+## Housekeeping
+
+- Problem Set 3 due on **Friday by 11:59 pm**
+- First Draft of Report due 11/21
+
+## Even More Surveys!
+
+- Google Sheet with survey links (next slide)
+- Reminders while you fill out the surveys
+    - Please fill them out completely, like you would want someone to fill out your own survey
+    - For questions about your GPA, screentime, etc.
+        1. Remember that your responses are anonymous
+        2. You can literally look these things up to answer those questions
+- You can also ask questions!
+
+## Final Project Surveys
+
+\begin{columns}[c]
+\begin{column}{0.55\textwidth}
+\footnotesize
+\url{https://docs.google.com/spreadsheets/d/1y9c10TO1zTEgsBxOBMjqvztZIoJzpTyour5GjJTSpgs/edit?usp=sharing}
+\end{column}
+\begin{column}{0.4\textwidth}
+```{r, out.width="100%", fig.align="center"}
+knitr::include_graphics("images/project-surveys-qr.png")
+```
+\end{column}
+\end{columns}
+
+<!-- Notes: Put at the end of the slides too -->
+
+## Recall: Bivariate Linear Regression
+
+<!-- DATA NEEDED: lecture dataset with marriage_opinion and marriage_perception
+     -> save as data/marriage.csv. Falls back to the original screenshot until then. -->
+
+\begin{columns}[c]
+\begin{column}{0.5\textwidth}
+\begin{itemize}
+  \item We can explain relationships through the form:
+\end{itemize}
+
+\texttt{predicted\_y = slope * x + intercept}
+
+\vspace{0.5em}
+\begin{itemize}
+  \item Useful code:
+\end{itemize}
+
+```{r, echo=TRUE, eval=FALSE}
+qplot(x, y, data) +
+  geom_smooth(method = 'lm')
+
+summary(lm(y.var ~ x.var,
+           data = table_name))
+```
+\end{column}
+\begin{column}{0.47\textwidth}
+```{r marriage-plot, eval=has_marriage, out.width="100%", fig.width=4.5, fig.height=4.5, fig.align="center"}
+marriage <- read.csv(marriage_path)
+ggplot(marriage, aes(x = marriage_opinion, y = marriage_perception)) +
+  geom_point() +
+  geom_smooth(method = "lm")
+```
+
+```{r marriage-fallback, eval=!has_marriage, out.width="100%", fig.align="center"}
+knitr::include_graphics("images/original-scatter-marriage.png")
+```
+\end{column}
+\end{columns}
+
+## What does linear regression tell us about the relationship?
+
+\begin{columns}[t]
+\begin{column}{0.48\textwidth}
+\underline{Slope ($m$):}
+\begin{itemize}
+  \item As our independent variable ($x$) increases by one, the dependent variable ($y$) tends to change by $m$ units on average.
+\end{itemize}
+\end{column}
+\begin{column}{0.48\textwidth}
+\underline{Intercept ($b$):}
+\begin{itemize}
+  \item If the independent variable ($x$) was zero, we would predict the dependent variable ($y$) to be $b$ units.
+  \begin{itemize}
+    \item Don't always interpret this literally!
+  \end{itemize}
+\end{itemize}
+\end{column}
+\end{columns}
+
+## Beyond Bivariate Relationships...
+
+- In reality, we assume that multiple factors may influence an outcome we're interested in:
+    - Consider a five-point measure of support for universal healthcare. What factors might predict greater/lesser support for this policy?
+        - Partisanship
+        - Income
+        - Education level
+        - Race
+        - Age
+        - And so on...
+
+## Multiple Linear Regression
+
+- Multiple linear regressions use the same principle as bivariate linear regressions but with multiple predictor variables
+    - E.g. Using partisanship, education, and age to predict support for universal healthcare
+- Useful for questions where we think multiple relevant factors could explain the variation in the outcome variable among our respondents
+
+\vspace{1em}
+\small
+Healthcare = (Slope$_1$ $\times$ partisanship) + Intercept
+
+\vspace{0.5em}
+Healthcare = (Slope$_1$ $\times$ partisanship) + (Slope$_2$ $\times$ education) + (Slope$_3$ $\times$ age) + Intercept
+
+## Multiple Linear Regression comes from multiple lines... who knew!
+
+```{r added-variable-plots, out.width="85%", fig.width=8, fig.height=5.2, fig.align="center"}
+# Built-in data (no download needed). Requires the car package.
+library(car)
+fit_mtcars <- lm(mpg ~ disp + hp + drat + am, data = mtcars)
+avPlots(fit_mtcars)
+```
+
+## So why perform multivariate regression?
+
+\begin{columns}[c]
+\begin{column}{0.6\textwidth}
+\small
+\begin{itemize}
+  \item Remember, our consistent issue in stats:
+  \begin{itemize}
+    \item We need to find the signal in the noise
+    \item In regression: we want to find the ``real'' value or relationship between variables, but there is noise (``error'')
+  \end{itemize}
+  \item Our questions:
+  \begin{itemize}
+    \item Is the noise we observe due to random chance, or some other factor?
+    \item If the noise is NOT due to random chance, how do we reduce our overall error?
+  \end{itemize}
+\end{itemize}
+\end{column}
+\begin{column}{0.37\textwidth}
+```{r, out.width="100%", fig.align="center"}
+knitr::include_graphics("images/regression-residuals.png")
+```
+\end{column}
+\end{columns}
+
+## As an equation:
+
+Truth = Our prediction (Estimate)
+
+\hspace{2em} $\pm$ Error due to random chance
+
+\hspace{2em} $\pm$ Influence from other variables
+
+\vspace{1em}
+Multivariate regression helps reduce the influence from other variables (e.g. omitted variables) by holding them constant or "controlling" for their effect.
+
+## Performing a multivariate regression
+
+To perform a multivariate regression, all you need to do is add the new variables to the linear model. For example:
+
+```{r, echo=TRUE, eval=FALSE}
+summary(lm(output.var ~ ind.var1 + ind.var2 + ind.var3, data))
+```
+
+## Example output: each variable has its own slope!
+
+<!-- DATA NEEDED: the data frame `democrats` (2020 US House Democratic candidates) with columns
+     dem_us_house_percent_2020, spending_dem_ushouse_2020, clinton_percent_2016,
+     dem_us_house_percent_2018 -> save as data/democrats.csv.
+     Falls back to the original screenshot until then. -->
+
+```{r mlr-output, eval=has_democrats, comment=NA, size="scriptsize"}
+democrats <- read.csv(democrats_path)
+mlr_fit <- lm(dem_us_house_percent_2020 ~ spending_dem_ushouse_2020 +
+                clinton_percent_2016 + dem_us_house_percent_2018,
+              data = democrats)
+summary(mlr_fit)
+```
+
+```{r mlr-fallback, eval=!has_democrats, out.width="90%", fig.align="center"}
+knitr::include_graphics("images/original-mlr-output-democrats.png")
+```
+
+## Jupyter Notebook Example
+
+## Scripts for Interpreting MLR
+
+\small
+**Script 1:** Holding constant [the variables you're controlling for], each [one-unit increase in X] is correlated with [interpretation of the coefficient of interest].
+
+- Example: Holding the presidential vote in 2016 and Democratic house vote in 2018 constant, each additional million dollars spent in the congressional race is correlated with -0.216% lower Democratic vote share in 2020.
+
+**Script 2:** On average, a [one-unit increase in X] is associated with a [interpretation of the coefficient of interest], holding the other variables in the regression constant.
+
+- Example: On average, districts where the Democratic house vote in 2018 is 1-percent higher is associated with a 0.11% higher 2020 Democratic house vote, holding constant the other variables.
+
+## Attendance Survey
+
+\begin{columns}[c]
+\begin{column}{0.55\textwidth}
+\begin{itemize}
+  \item \textbf{Fill out before the end of section!}
+  \begin{itemize}
+    \item \url{https://forms.gle/CCZYNHBQ5Y8CvPiRA}
+  \end{itemize}
+\end{itemize}
+\end{column}
+\begin{column}{0.4\textwidth}
+```{r, out.width="100%", fig.align="center"}
+knitr::include_graphics("images/attendance-qr.png")
+```
+\end{column}
+\end{columns}
+
+## Acknowledgements
+
+Special thanks to prior GSIs for providing materials off of which some of these slides are based, especially Ian Castro.
