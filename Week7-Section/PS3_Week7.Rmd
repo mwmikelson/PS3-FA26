@@ -254,7 +254,7 @@ Based on our sample, the proportion of voters who support the candidate is signi
 - The **null** hypothesis is what we'd imagine would happen if our treatment had no effect. The **alternative** hypothesis is what we'd imagine if our treatment had some effect. We **provide support for one hypothesis**.
 
 
-## Feedback Form
+## Anonymous Feedback Form
 
 ```{r, fig.align="center", out.width="50%", echo=FALSE}
 knitr::include_graphics("images/feedback_form.png")

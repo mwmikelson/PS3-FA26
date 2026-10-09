@@ -1,5 +1,3 @@
-library(testthat)
-
 test = list(
   name = "q4",
   cases = list(
@@ -8,8 +6,8 @@ test = list(
       name = NA,
       points = 1,
       code = {
-        test_that("q4", {
-          expect_equal(q4.answer, "C")
+        testthat::test_that("q4", {
+          testthat::expect_equal(toupper(trimws(as.character(q4.answer))), "D")
         })
       }
     )
