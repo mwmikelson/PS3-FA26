@@ -1,55 +1,77 @@
 ---
 title: "PS 3: Week 9"
 subtitle: "From Samples to Populations"
+author: "Maya Mikelson"
 output:
   beamer_presentation:
-    theme: "default"
+    theme: "Madrid"
+    colortheme: "default"
     slide_level: 2
-    incremental: false
+fontsize: 11pt
+params:
+  show_answers: true
+  data_ok: false
 header-includes:
-  - \usepackage{booktabs}
+  - \usepackage{xcolor}
+  - \newcommand{\hlred}[1]{\colorbox{red!20}{#1}}
+  - \newcommand{\hlblue}[1]{\colorbox{blue!15}{#1}}
   - \setbeamertemplate{navigation symbols}{}
-  - \setbeamertemplate{footline}[frame number]
+  - \usepackage{tikz}
+  - \usepackage{subcaption}
+  - \definecolor{targetred}{HTML}{EA5B5D}
+  - \usepackage{tikz}
+  - \usepackage{pgfplots}
+  - \pgfplotsset{compat=1.18}
+  - \definecolor{curveblue}{RGB}{16, 120, 200}
+  - \definecolor{cyangreen}{RGB}{0, 195, 160}
+  - \definecolor{cyanfill}{RGB}{232, 252, 248}
+  - \definecolor{pinkred}{RGB}{235, 30, 95}
+  - \definecolor{pinkfill}{RGB}{253, 235, 243}
+  - \definecolor{purpletext}{RGB}{125, 70, 210}
+  - \definecolor{purplefill}{RGB}{242, 238, 255}
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE)
+
+library(estimatr)
+
+qr_image <- "attendance-qr.png"
 ```
 
-## Attendance Survey
 
-\begin{columns}[c]
-\begin{column}{0.55\textwidth}
-\begin{itemize}
-  \item \textbf{Fill out before the end of section!}
-  \begin{itemize}
-    \item \url{https://forms.gle/mtLZtKV9YDv3vqVk7}
-  \end{itemize}
-\end{itemize}
-\end{column}
-\begin{column}{0.4\textwidth}
-```{r, out.width="100%", fig.align="center"}
-knitr::include_graphics("images/attendance-qr.png")
-```
-\end{column}
-\end{columns}
-
-<!-- Notes: Put at the end of the slides too -->
 
 ## Agenda
 
-1. Attendance Survey
+1. Final Projects
 2. Generalizability and Weighting
 3. Descriptive Hypothesis Testing
-4. Mid-Semester Evals
-5. Group Projects
 
 ## Housekeeping
 
-- Midterm
-- Final Projects
-    - Go over your ideas in groups and decide on a project
-    - Data collection is due **October 31st, 11:59 pm**
+- Congrats on finishing the midterm!
+- Data collection or surveys are due **tonight**: *October 23rd, 11:59 pm*
+    
+## Final Projects -- Choosing a Project
+
+- Which proposal is the most feasible?
+- What's the most interesting to the most members?
+- General notes to consider once you've chosen a project:
+    - Make sure you have a "Prefer not to answer" or similar option for sensitive questions
+         - Examples of sensitive topics can include, but are not limited to sexual orientation and GPA
+    - Consider adding additional variables for HTEs or descriptive hypothesis tests
+
+## Final Projects -- Data Collection
+
+- **Non-survey-based**
+    - Upload as a CSV or Excel file
+    - Extensions allowed, but plan ahead!
+- **Survey-based**
+    - Instructions on how to make a Google Form are on the "Data Collection" assignment on bCourses, including how to randomize treatment/control
+    - I will have comments to your groups on the surveys by October 25th, please make the changes by **Thursday, October 29th**
+    - I will have my sections complete the surveys on October 30th and November 2nd so that you have the data with plenty of time to submit the first draft of the report by **November 13th**
+- You're welcome to work on this during office hours
+
 
 ## From Samples to Populations
 
@@ -64,18 +86,18 @@ knitr::include_graphics("images/attendance-qr.png")
 
 ```{r weighting-table, results="asis"}
 grades <- data.frame(
-  Category = c("In-class assignments", "Problem sets", "Final project",
-               "Peer evaluations", "Section participation", "Midterm", "Final"),
-  Weights = c(0.15, 0.35, 0.15, 0.05, 0.05, 0.10, 0.15),
-  Grades = c(0.75, 0.95, 0.90, 1.00, 1.00, 0.90, 0.90)
+  Category = c("In-class Individual Assignments", "In-class Group Assignments", "Problem Sets", "Final Project",
+               "Peer Evaluations", "Section Attendance", "Midterm", "Final"),
+  Weights = c(0.10, 0.05, 0.30, 0.10, 0.05, 0.05, 0.15, 0.20),
+  Grades = c(0.75, 0.90, 0.95, 0.90, 1.00, 1.00, 0.90, 0.90)
 )
 grades$Weighted <- grades$Weights * grades$Grades
 
 tab <- data.frame(
   Category = grades$Category,
   Weight = sprintf("%.2f", grades$Weights),
-  `Soo's Grade` = sprintf("%.0f%%", grades$Grades * 100),
-  `Weighted Grade` = sprintf("%.2f%%", grades$Weighted * 100),
+  `Soo's Grade` = sprintf("%.0f\\%%", grades$Grades * 100),
+  `Weighted Grade` = sprintf("%.2f\\%%", grades$Weighted * 100),
   check.names = FALSE
 )
 tab <- rbind(tab, data.frame(
@@ -118,58 +140,17 @@ knitr::kable(tab, format = "latex", booktabs = TRUE, escape = FALSE,
     - Ex: if college-educated voters are overrepresented in our sample, they get a smaller weight; if non-college-educated voters are underrepresented in our sample, they get a bigger weight
 - Adding weights to our descriptive hypothesis tests can help us take into account sampling bias when comparing two groups
 
-## Group Projects -- Choosing a Project
 
-- Which proposal is the most feasible?
-- What's the most interesting to the most members?
-- General notes to consider once you've chosen a project:
-    - Make sure you have a "Prefer not to answer" or similar option for sensitive questions
-    - Consider adding additional variables for HTEs or descriptive hypothesis tests (more on that today...)
-
-## Group Projects -- Data Collection
-
-- **Non-survey-based**
-    - Upload as a CSV or Excel file
-    - Extensions allowed, but plan ahead!
-- **Survey-based**
-    - Instructions on how to make a Google Form are on the "Data Collection" assignment on bCourses, including how to randomize treatment/control
-- You're welcome to work on this during office hours!
-
-## Mid-Semester Course Evaluation
-
-\begin{columns}[c]
-\begin{column}{0.55\textwidth}
-\begin{itemize}
-  \item \textbf{Fill out now (or by the next section)}
-  \begin{itemize}
-    \item \url{https://forms.gle/Qsu3JFCbxu3RzxF6A}
-  \end{itemize}
-\end{itemize}
-\end{column}
-\begin{column}{0.4\textwidth}
-```{r, out.width="100%", fig.align="center"}
-knitr::include_graphics("images/evaluation-qr.png")
-```
-\end{column}
-\end{columns}
-
+```{r attendance, results='asis', echo=FALSE}
+if (params$show_answers) {
+  cat(paste0("
 ## Attendance Survey
-
-\begin{columns}[c]
-\begin{column}{0.55\textwidth}
-\begin{itemize}
-  \item \textbf{Fill out before the end of section!}
-  \begin{itemize}
-    \item \url{https://forms.gle/mtLZtKV9YDv3vqVk7}
-  \end{itemize}
-\end{itemize}
-\end{column}
-\begin{column}{0.4\textwidth}
-```{r, out.width="100%", fig.align="center"}
-knitr::include_graphics("images/attendance-qr.png")
+\\begin{center}
+\\includegraphics[width=0.7\\textwidth]{", qr_image, "}
+\\end{center}
+"))
+}
 ```
-\end{column}
-\end{columns}
 
 ## Acknowledgements
 
