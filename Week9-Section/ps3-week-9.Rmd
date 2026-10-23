@@ -68,10 +68,20 @@ qr_image <- "attendance-qr.png"
     - Extensions allowed, but plan ahead!
 - **Survey-based**
     - Instructions on how to make a Google Form are on the "Data Collection" assignment on bCourses, including how to randomize treatment/control
-    - I will have comments to your groups on the surveys by October 25th, please make the changes by **Thursday, October 29th**
-    - I will have my sections complete the surveys on October 30th and November 2nd so that you have the data with plenty of time to submit the first draft of the report by **November 13th**
+    - I will have comments to your groups on the surveys by October 26th, please make the changes by **Thursday, October 29th**
+    - I will have my sections complete the surveys from the other section on October 30th and November 2nd so that you have the data with plenty of time to submit the first draft of the report by **November 13th**
 - You're welcome to work on this during office hours
 
+```{r attendance, results='asis', echo=FALSE}
+if (params$show_answers) {
+  cat(paste0("
+## Attendance Survey
+\\begin{center}
+\\includegraphics[width=0.7\\textwidth]{", qr_image, "}
+\\end{center}
+"))
+}
+```
 
 ## From Samples to Populations
 
@@ -121,7 +131,9 @@ knitr::kable(tab, format = "latex", booktabs = TRUE, escape = FALSE,
     - **Non-response bias:** what kind of people take (or don't take) political surveys?
 - And what about random chance?
     - E.g. a sample I take on a Monday will be different from a sample I take on a Tuesday
-- You have the tools already to address both of these problems...
+- You already have the tools to address these problems, \textcolor{blue}{what are they?}
+\pause
+   - Hypothesis testing
 
 ## Descriptive Hypothesis Testing: Is this Random Chance?
 
@@ -129,8 +141,7 @@ knitr::kable(tab, format = "latex", booktabs = TRUE, escape = FALSE,
     - Ex.: Younger voters support our candidate more than older voters.
 - There is still the same issue as before:
     - Is the observed difference between Group A and Group B due to random chance (from sampling), or is it because the two groups truly are not the same?
-- Note: Our goal with this approach is to describe differences, **NOT** determine causality! We would need to do an experiment to prove that.
-    - Recall HTEs...
+- Note: Our goal with this approach is to describe differences, **NOT** determine causality! We would need to do an experiment to prove that (remember Heterogeneous Treatment Effects)
 
 ## Descriptive Hypothesis Testing w/ Weights: Addressing Sampling Bias
 
@@ -141,17 +152,6 @@ knitr::kable(tab, format = "latex", booktabs = TRUE, escape = FALSE,
 - Adding weights to our descriptive hypothesis tests can help us take into account sampling bias when comparing two groups
 
 
-```{r attendance, results='asis', echo=FALSE}
-if (params$show_answers) {
-  cat(paste0("
-## Attendance Survey
-\\begin{center}
-\\includegraphics[width=0.7\\textwidth]{", qr_image, "}
-\\end{center}
-"))
-}
-```
-
 ## Acknowledgements
 
-Special thanks to prior GSIs for providing materials off of which some of these slides are based, especially Ian Castro.
+Special thanks to prior GSIs for providing materials off of which some of these slides are based, especially Will Halm.

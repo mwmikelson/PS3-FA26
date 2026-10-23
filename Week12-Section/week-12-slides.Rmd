@@ -1,0 +1,251 @@
+---
+title: "PS 3: Week 12"
+subtitle: "Multiple Linear Regression and Experiments"
+author: "Maya Mikelson"
+lang: en-US
+section-titles: false
+output:
+  beamer_presentation:
+    theme: "Madrid"
+    colortheme: "default"
+    slide_level: 2
+  pdf_document:
+    template: tagged-article.tex
+fontsize: 11pt
+header-includes:
+  - \usepackage{graphicx}
+params:
+  show_answers: true
+  data_ok: false
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+
+# Attendance slide (QR code + link). Only printed when show_answers is TRUE,
+# so the posted version (show_answers: false) has no live attendance code.
+attendance_slide <- function(section_title = NULL) {
+  if (!is.null(section_title)) cat("\n# ", section_title, "\n", sep = "")
+  cat(r"---(
+
+## Attendance Survey
+
+:::::: {.columns align=center}
+::: {.column width="55%"}
+**Fill out before the end of section!**
+
+- [Attendance survey form (forms.gle/88qgrMWiEHheWFqc9)](https://forms.gle/88qgrMWiEHheWFqc9)
+:::
+::: {.column width="45%"}
+\includegraphics[width=\linewidth,keepaspectratio,alt={QR code that links to the attendance survey form at forms.gle/88qgrMWiEHheWFqc9}]{images/attendance-qr.png}
+:::
+::::::
+
+)---")
+}
+
+# Text description of the regression table image, used as its alt text
+table_alt <- paste(
+  "Regression table titled: Table 1, Relationship Between Democratic US House Vote Share in 2020 and Campaign Spending in 2020, With Controls.",
+  "Two columns: Democratic Incumbents and Republican Incumbents.",
+  "Each cell gives the coefficient, with the standard error in parentheses.",
+  "Democratic Spending, dollars in millions, 2020: Democratic Incumbents minus 0.216 (0.185); Republican Incumbents blank.",
+  "Republican Spending, dollars in millions, 2020: Democratic Incumbents blank; Republican Incumbents 0.138 (0.161).",
+  "Clinton Vote Percent, 2016: 0.789 with three asterisks (0.074); 0.800 with three asterisks (0.071).",
+  "Democratic US House Percentage, 2018: 0.107 (0.065); 0.201 with three asterisks (0.053).",
+  "Constant: 6.156 (3.223); minus 2.684 (2.699).",
+  "N: 210; 191. R squared: 0.6707; 0.5276.",
+  "Notes: The outcome of both regressions is the percentage of the vote that Democrats obtained in US House elections in 2020.",
+  "Each observation is one Congressional district.",
+  "The column headings show the subset of the data in which the regression was run.",
+  "Three asterisks mean p less than 0.001, two asterisks mean p less than 0.01, and one asterisk means p less than 0.05."
+)
+
+# Centered table image; `highlight` is added to the alt text for the red-box versions
+table_image <- function(file, highlight = "") {
+  cat(sprintf(r"---(
+
+\begin{center}
+\includegraphics[height=0.76\textheight,keepaspectratio,alt={%s %s}]{%s}
+\end{center}
+
+)---", table_alt, highlight, file))
+}
+```
+
+# Overview
+
+```{r attendance-start, results='asis'}
+if (params$show_answers) attendance_slide()
+```
+
+## Agenda
+
+1. Attendance Survey
+2. MLR: Experiments
+3. MLR: Experiments: Worksheet
+4. Interpreting Regression Tables
+5. Regression Table Example: Observational
+
+## Housekeeping
+
+- First Draft of Report due 11/21
+    - You can look at results as a group
+    - **Write the reports individually**
+        - Three statistical tests + interpretations
+- Office Hours for cleaning/testing the data
+
+# MLR: Experiments
+
+## Multiple Linear Regression + Experiments
+
+**What do experiments help us achieve?**
+
+- Randomization lets us identify a causal effect by eliminating sources of **bias**
+    - Because treatment is randomized, we cannot have omitted variable bias
+    - Because we assign treatment before measuring our outcome of interest, we cannot have reverse causation
+    - Because we---and not the participants---decide whether someone is assigned to treatment, we cannot have selection bias
+- Therefore, the treatment effect we see in an experiment can be seen as causal
+    - Ex: The treatment causes a 5-point increase in voting compared to the control
+
+## Multiple Linear Regression + Experiments
+
+**What does multiple linear regression help us achieve?**
+
+- Beyond bias, we are worried about **noise**
+    - Recall that randomization of treatment creates noise
+        - *Did we observe our results do to random chance?*
+- We can reduce noise by performing a multiple linear regression
+    - This will allow us to look at the treatment effect while controlling for other variables that may be related to the outcome, such as demographics or study conditions
+- The treatment effect is still the **only causal effect we identify**
+    - The estimates we find for the other variables in our regression are only associations or correlations, not causal effects
+        - **No causation without randomization!!!!!!!!!!**
+
+## No Bias, Minimal Noise
+
+:::::: {.columns align=center}
+::: {.column width="58%"}
+**Randomized** Experiments + Multiple Linear Regression
+
+No bias + Minimal noise
+
+This gives us an **unbiased** and **precise** estimate of the true average treatment effect in the population
+:::
+::: {.column width="42%"}
+\includegraphics[width=\linewidth,keepaspectratio,alt={Bullseye target with red and white rings and a tight cluster of black dots in the center, labeled high accuracy and high precision.}]{images/accuracy-precision-target.png}
+:::
+::::::
+
+# MLR: Experiments: Worksheet
+
+## Regression Worksheet (Experiments)
+
+```{r worksheet-table, results='asis'}
+table_image("images/regression-table.png")
+```
+
+# Interpreting Regression Tables
+
+## Reading a Regression Table
+
+Each **column** reports the results of one regression. Multiple columns means we are looking at the results of multiple different regressions (in this example, two). The **column titles** should tell you what is different about the regressions.
+
+- Sometimes this will be switching subsets of data (as in this example).
+- Sometimes it will involve switching *outcomes*.
+- Sometimes the outcome and subset will be the same, but new variables will be introduced into the regression.
+- You have to use context and the table notes to be sure what is changing across the columns.
+
+## Reading a Regression Table
+
+Each **row** represents the coefficients/estimates on one of the variables in the regression.
+
+- The **first column** shows the variable that is being estimated.
+- The **last row** of estimates contains the Intercept or Constant term.
+
+In each **cell**, the first number is the coefficient, and the number in brackets below it is the standard error. These are the only numbers we need to calculate a t-statistic, confidence interval, and p-value.
+
+The **stars** next to each number indicate if the estimates are statistically significant and, if so, how small the p-value is. (The **Table Notes** along the bottom will tell you how to interpret the stars.)
+
+## To re-cap
+
+**Missing cells** mean that this variable was not included in this regression. Sometimes it will just be blank, sometimes there will be a "-" to indicate it is being left blank on purpose.
+
+The **sample size** and **R squared** are printed at the bottom of each column.
+
+- $R^2$ or R squared is the proportion of the variation in the dependent variable that is predictable from the independent variable(s).
+
+## Steps for Interpretation!
+
+- Look at the **title** of the table
+    - What are the authors generally trying to tell us?
+    - This can clue you into relevant variables and takeaways, though keep a critical eye to the table yourself!
+- Look at the title of each **column** (this is the title of each regression model)
+    - What is each model trying to tell me? What **subset** of data are they using? What **outcome**?
+- Look at the **row** labels (these are the predictor variables)
+    - Which ones are **causal** (treatment assignment)? Which ones are **not** (any other variables)?
+- Look at the point **estimates** themselves
+    - Based on the row label and column title, what is this estimate telling me?
+- Look at the measures of **noise**
+    - Is the estimate **significant**? How do I interpret significance in this context?
+        - Is it causal?
+
+## Example Table: Table Title
+
+```{r table-title, results='asis'}
+table_image("images/regression-table-title.png",
+            "A red box highlights the table title at the top.")
+```
+
+## Example Table: Column Titles
+
+```{r table-columns, results='asis'}
+table_image("images/regression-table-columns.png",
+            "A red box highlights the column titles, Democratic Incumbents and Republican Incumbents.")
+```
+
+## Example Table: Row Labels
+
+```{r table-rows, results='asis'}
+table_image("images/regression-table-rows.png",
+            "A red box highlights the row labels, from Democratic Spending down to Constant.")
+```
+
+## Example Table: Point Estimate
+
+```{r table-estimate, results='asis'}
+table_image("images/regression-table-estimate.png",
+            "A red box highlights the point estimate 0.789 for Clinton Vote Percent, 2016, in the Democratic Incumbents column.")
+```
+
+## Example Table: Significance Stars
+
+```{r table-stars, results='asis'}
+table_image("images/regression-table-stars.png",
+            "A red box highlights the three asterisks next to the estimate 0.789 for Clinton Vote Percent, 2016.")
+```
+
+# Regression Table Example: Observational
+
+## Example
+
+Top-left box of the previous table:
+
+- Based on the title, it seems that we're supposed to look at how Democratic spending is related to Democratic vote share in 2020 Congressional races. "Controls" implies a multiple linear regression.
+- The model is called "Democratic incumbents". The outcome is the vote share for Democrats in 2020 Congressional races, but only in races where Democrats already held the seat.
+- The row refers to Democratic spending in 2020 and should be interpreted in millions of dollars.
+
+## Example (continued)
+
+- Given that "vote share" is in percentage points, and Democratic spending is in millions of dollars: an increase of \$1 million dollars in Democratic spending is associated with, on average, a 0.22% decrease in Democratic vote share in 2020 Congressional races where Democrats were the incumbents.
+- This relationship is not significant (note that the standard error and estimate are of similar size!)
+    - **None of these variables have a causal interpretation because the variables are not randomly assigned.**
+
+# Wrap-Up
+
+```{r attendance-end, results='asis'}
+if (params$show_answers) attendance_slide()
+```
+
+## Acknowledgements
+
+Special thanks to prior GSIs for providing materials off of which some of these slides are based, especially Yue Lin.
