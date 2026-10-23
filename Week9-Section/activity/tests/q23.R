@@ -5,10 +5,12 @@ test = list(
       name = "q23 - 1",
       hidden = FALSE,
       success_message = "Correct!",
-      failure_message = "Check three things: the outcome and treatment columns, which two groups you compared, and that the CONTROL group is in condition1 and the TREATMENT group is in condition2.",
+      failure_message = "Not quite. Compare the Pr(>|t|) columns of your two outputs, and think about what happens to uncertainty when there are fewer respondents.",
       code = {
-        expected <- estimatr::difference_in_means(call ~ race, data = resume, condition1 = "white", condition2 = "black")
-        question.correct <- tryCatch(isTRUE(all.equal(unname(callback.dim$coefficients), unname(expected$coefficients))) && isTRUE(all.equal(unname(callback.dim$std.error), unname(expected$std.error))), error = function(e) FALSE)
+        full <- estimatr::difference_in_means(medicare_expand ~ radio_news, data = data, condition1 = 0, condition2 = 1)
+        small <- estimatr::difference_in_means(medicare_expand ~ radio_news, data = head(data, 200), condition1 = 0, condition2 = 1)
+        expected.answer <- ifelse(unname(small$p.value) > unname(full$p.value), 'a', 'b')
+        question.correct <- tryCatch(isTRUE(tolower(q23.answer) == expected.answer), error = function(e) FALSE)
         testthat::expect_true(question.correct)
       }
     )

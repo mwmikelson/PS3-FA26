@@ -5,7 +5,7 @@ test = list(
       name = "q18 - 1",
       hidden = FALSE,
       success_message = "Correct!",
-      failure_message = "Not quite. Which thing was randomly assigned: the mailer, or whether someone voted in 2004?",
+      failure_message = "Not quite. Was watching TV news randomly assigned?",
       code = {
         expected.answer <- 'b'
         question.correct <- tryCatch(isTRUE(tolower(q18.answer) == expected.answer), error = function(e) FALSE)

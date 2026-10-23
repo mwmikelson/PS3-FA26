@@ -5,7 +5,7 @@ test = list(
       name = "q20 - 1",
       hidden = FALSE,
       success_message = "Correct!",
-      failure_message = "Not quite. What does the null hypothesis say about the treatment?",
+      failure_message = "Not quite. What does the null hypothesis say about the difference between the groups?",
       code = {
         expected.answer <- 'a'
         question.correct <- tryCatch(isTRUE(tolower(q20.answer) == expected.answer), error = function(e) FALSE)

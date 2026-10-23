@@ -5,7 +5,7 @@ test = list(
       name = "q24 - 1",
       hidden = FALSE,
       success_message = "Correct!",
-      failure_message = "Not quite. Remember what a p-value is a probability OF: the data, assuming the null hypothesis is true.",
+      failure_message = "Not quite. Does failing to find strong evidence of a difference prove that there is no difference?",
       code = {
         expected.answer <- 'b'
         question.correct <- tryCatch(isTRUE(tolower(q24.answer) == expected.answer), error = function(e) FALSE)

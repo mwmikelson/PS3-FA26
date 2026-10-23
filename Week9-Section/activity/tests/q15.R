@@ -7,9 +7,9 @@ test = list(
       success_message = "Correct!",
       failure_message = "Not quite. Compare the CI Lower and CI Upper columns from your two outputs: do the two intervals share any values?",
       code = {
-        v <- estimatr::difference_in_means(primary2006 ~ messages, data = social[social$primary2004 == 1, ], condition1 = "Control", condition2 = "Neighbors")
-        nv <- estimatr::difference_in_means(primary2006 ~ messages, data = social[social$primary2004 == 0, ], condition1 = "Control", condition2 = "Neighbors")
-        overlap <- max(v$conf.low, nv$conf.low) <= min(v$conf.high, nv$conf.high)
+        r <- estimatr::difference_in_means(repeal_aca ~ tv_news, data = data[data$republican == 1, ], condition1 = 0, condition2 = 1)
+        dd <- estimatr::difference_in_means(repeal_aca ~ tv_news, data = data[data$democrat == 1, ], condition1 = 0, condition2 = 1)
+        overlap <- max(r$conf.low, dd$conf.low) <= min(r$conf.high, dd$conf.high)
         expected.answer <- ifelse(overlap, 'a', 'b')
         question.correct <- tryCatch(isTRUE(tolower(q15.answer) == expected.answer), error = function(e) FALSE)
         testthat::expect_true(question.correct)
