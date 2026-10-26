@@ -1,0 +1,2476 @@
+---
+title: "PS 3 Final Exam Study Guide"
+author: "Maya Mikelson"
+date: "`r format(Sys.Date(), '%B %d, %Y')`"
+lang: en-US
+subject: "Study guide with practice questions and answer key for the Political Science 3 final exam"
+keywords: "Political Science 3, final exam, study guide, UC Berkeley"
+params:
+  show_answers: true   # TRUE = instructor version with the answer key; FALSE = student version
+output:
+  pdf_document:
+    latex_engine: xelatex
+    toc: false
+    number_sections: false
+geometry: margin=1in
+fontsize: 12pt
+linestretch: 1.1
+colorlinks: true
+header-includes:
+  - \usepackage{fancyhdr}
+  - \pagestyle{fancy}
+  - \fancyhead[R]{\thepage}
+  - \setlength{\headheight}{14.5pt}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, comment = "", warning = FALSE, message = FALSE)
+#install.packages("estimatr")
+library(estimatr)
+#install.packages("ggplot2")
+library(ggplot2)
+#install.packages("wooldridge")
+library(wooldridge)
+#install.packages("rdrobust")
+library(rdrobust)
+#install.packages("stargazer")
+library(stargazer)
+options(warn = -1)
+
+
+## Real data, downloaded from the internet or loaded from R packages
+social <- read.csv("https://raw.githubusercontent.com/kosukeimai/qss/master/CAUSALITY/social.csv")
+resume <- read.csv("https://raw.githubusercontent.com/kosukeimai/qss/master/CAUSALITY/resume.csv")
+minwage <- read.csv("https://raw.githubusercontent.com/kosukeimai/qss/master/CAUSALITY/minwage.csv")
+data("rdrobust_RDsenate")
+senate <- rdrobust_RDsenate
+# vote1 comes with the wooldridge package
+
+## Small data prep used by later cells
+minwage$state <- ifelse(minwage$location == "PA", "PA", "NJ")
+minwage$full_change <- minwage$fullAfter - minwage$fullBefore
+senate$dem_won <- ifelse(senate$margin > 0, 1, 0)
+voted.2004 <- subset(social, primary2004 == 1)
+did.not.vote.2004 <- subset(social, primary2004 == 0)
+close.races <- subset(senate, abs(margin) < 2)
+```
+
+# How to use this study guide
+
+This guide focuses on the second half of the course (Weeks 7--14) with some review of the first half. Every figure is real R output from real data, produced when this document is knit. The questions are multiple choice; some say *Select all*. Try each question before looking at the answer key at the end, which explains every answer choice. (To make a student version without the key, set `show_answers: false` in the header.)
+
+# Part 1: Foundations (Weeks 2--6 review)
+
+This part reviews the ideas from the first half of the course that everything else builds on. Questions in this part use the following data, which come from a real field experiment: Gerber, Green, and Larimer's (2008) social pressure experiment, in which registered voters were randomly assigned to receive different mailers before the August 2006 primary election in Michigan (data from Imai's *Quantitative Social Science* textbook). Each row is one voter.
+
+- `sex`: `"female"` or `"male"`
+- `yearofbirth`: the voter's year of birth
+- `primary2004`: `1` if the voter voted in the August 2004 primary, `0` if not
+- `messages`: the mailer condition the voter was randomly assigned to: `"Control"` (no mailer), `"Civic Duty"` (a mailer telling people it is their civic duty to vote), `"Hawthorne"` (a mailer saying "YOU ARE BEING STUDIED" and that turnout is being observed), or `"Neighbors"` (a mailer showing the voting records of the voter and their neighbors)
+- `primary2006`: the **outcome**, `1` if the voter voted in the August 2006 primary, `0` if not
+- `hhsize`: the number of people in the voter's household
+
+## 1.1 Potential outcomes and causality
+
+**Question 1.** Which of the following best describes a **potential outcome**?
+
+(a) The value of the outcome a particular unit would have had if it had received a particular treatment
+(b) The outcome we actually observe for a unit after treatment
+(c) The average outcome among everyone who received the treatment
+(d) The difference between the treatment group average and the control group average
+
+For the next two questions, here are the (hypothetical) potential outcomes for four registered voters. The outcome is whether the voter turns out (`1` = votes, `0` = does not vote). The treatment is receiving a mailer urging them to vote.
+
+| Voter | Turnout without the mailer | Turnout with the mailer |
+|---|---|---|
+| A | 0 | 1 |
+| B | 1 | 1 |
+| C | 0 | 0 |
+| D | 0 | 1 |
+
+**Question 2.** What is the average treatment effect of the mailer for these four voters?
+
+(a) 0.25
+(b) 0.50
+(c) 0.75
+(d) 1.00
+
+**Question 3.** Why can't researchers compute these unit-level treatment effects in a real study?
+
+(a) Each voter can only receive one treatment, so we only ever see one of that voter's two potential outcomes
+(b) The sample is usually too small
+(c) Treatment effects are not defined for individual people
+(d) Potential outcomes only exist in randomized experiments
+
+**Question 4.** Which of the following are **causal** questions? *Select all*
+
+(a) Does receiving a mailer showing your neighbors' voting records increase the probability that you vote?
+(b) Do women vote at higher rates than men?
+(c) Would this particular voter have voted if she had not received the mailer?
+(d) Which state had the highest turnout rate in 2020?
+
+## 1.2 Correlation is not causation
+
+**Question 5.** A study of US House incumbents finds that the incumbents who spend more money on their campaigns tend to win a *smaller* share of the vote. Which of the following are possible explanations that do **not** mean spending causes worse results? *Select all*
+
+(a) Reverse causation: incumbents who expect a close race raise and spend more money
+(b) Omitted variable bias: how competitive the district is could cause both higher spending and a smaller vote share
+(c) Because the correlation is negative, spending must have no effect on vote share
+(d) Collecting data on every House district in the country would remove the problem
+
+**Question 6.** A university compares the final exam scores of students who chose to attend optional review sessions with the scores of students who did not, and finds that attendees scored 8 points higher. What is the best critique of the claim that the review sessions caused the higher scores?
+
+(a) Students who choose to attend may be different (e.g., more motivated) than students who do not, so the groups would differ even without the sessions (selection bias)
+(b) The number of students is too small to compare two averages
+(c) Exam scores cannot be compared across groups
+(d) There is no problem: a difference in averages always measures the causal effect
+
+## 1.3 Randomized experiments
+
+**Figure 1**
+
+```{r fig1}
+table(social$messages, social$sex)
+```
+
+**Question 7.** In Figure 1, how many women were assigned to the Hawthorne condition?
+
+(a) 19,064
+(b) 19,140
+(c) 38,204
+(d) 95,419
+
+**Question 8.** Which of the following are true about Figure 1? *Select all*
+
+(a) The share of women is nearly identical across the four conditions (about 50\% in each), which is what we expect when assignment is random
+(b) Random assignment should also balance characteristics the researchers did not measure
+(c) The Control group is much larger than the others, so it must differ from the treatment groups in other ways
+(d) If the shares of women had differed by a few percentage points, that would prove assignment was not random
+
+**Question 9.** Why is comparing the 2006 turnout of the Neighbors group to the 2006 turnout of the Control group free of selection bias?
+
+(a) Voters were randomly assigned to each group, so the two groups have the same potential outcomes on average
+(b) The sample is very large
+(c) The voters chose which mailer to receive
+(d) The researchers controlled for sex and age in the comparison
+
+**Question 10.** Which of the following are true?\
+(1) In an experiment with random assignment, the treatment and control groups are, on average, identical on characteristics the researchers never measured.\
+(2) Experiments eliminate noise as well as bias.
+
+(a) (1) only
+(b) (2) only
+(c) Both (1) and (2)
+(d) Neither (1) nor (2)
+
+## 1.4 Reading difference-in-means output
+
+The next questions use another real experiment: Bertrand and Mullainathan's (2004) resume audit study. Researchers sent fictitious resumes in response to real job ads and randomly assigned each resume a first name that signals the applicant's race. Each row is one resume.
+
+- `race`: `"black"` or `"white"`, the race signaled by the name randomly assigned to the resume
+- `call`: the **outcome**, `1` if the employer called back, `0` if not
+- `sex`, `firstname`: the sex and first name on the resume
+
+**Figure 2**
+
+```{r fig2}
+table(resume$race, resume$call)
+```
+
+**Question 11.** In Figure 2, about what percent of the resumes with Black-sounding names received a callback?
+
+(a) 6.4\%
+(b) 9.6\%
+(c) 40.1\%
+(d) 93.6\%
+
+**Figure 3**
+
+```{r fig3}
+difference_in_means(call ~ race, resume, condition1 = 'black', condition2 = 'white')
+```
+
+**Question 12.** Which of the following is the correct interpretation of the estimate in Figure 3?
+
+(a) In this experiment, resumes with white-sounding names received callbacks 3.2 percentage points more often than otherwise similar resumes with Black-sounding names
+(b) Resumes with white-sounding names were 3.2\% more likely to get a callback (a relative increase of 3.2\%)
+(c) Resumes with Black-sounding names received callbacks 3.2 percentage points more often
+(d) Among all job applicants in the US, white applicants are called back 3.2 percentage points more often
+
+**Question 13.** What would change in the output of Figure 3 if the code used `condition1 = 'white'` and `condition2 = 'black'` instead?
+
+(a) The estimate would be about $-0.032$ and the confidence interval would flip sign; the standard error and p-value would stay the same
+(b) The standard error would change sign
+(c) The p-value would become about 0.96
+(d) Nothing would change at all
+
+## 1.5 Bias, noise, and the standard error
+
+**Question 14.** In 1936 the *Literary Digest* surveyed 2.2 million people and predicted that Landon would beat Roosevelt in a landslide; Roosevelt won easily. Which of the following are true? *Select all*
+
+(a) The huge sample made the noise in the poll very small, but it did nothing to fix the bias from who was surveyed
+(b) Gallup's much smaller but more representative sample got closer to the truth
+(c) The poll missed because 2.2 million respondents is too few to measure a national election
+(d) The error was due to noise, so repeating the poll would likely have given the right answer
+
+**Question 15.** A researcher wants to cut the standard error of a difference-in-means estimate in half. If nothing else changes (including the spread of the outcome and the split between groups), the sample size needs to become...
+
+(a) Twice as large
+(b) Four times as large
+(c) Half as large
+(d) Ten times as large
+
+**Question 16.** A study's estimate is $0.12$ and its standard error is $0.06$. What is the t-statistic, and is the estimate statistically significant by the usual convention?
+
+(a) $t = 2$; statistically significant, because $|t| > 1.96$
+(b) $t = 0.5$; not statistically significant
+(c) $t = 0.0072$; not statistically significant
+(d) $t = 2$; not statistically significant, because the p-value is the same as the t-statistic
+
+**Question 17.** A researcher has 10,000 people to divide between a treatment group and a control group. Which split gives the smallest standard error (if the outcome has the same spread in both groups)?
+
+(a) 5,000 treatment and 5,000 control
+(b) 9,000 treatment and 1,000 control
+(c) 1,000 treatment and 9,000 control
+(d) All splits give the same standard error
+
+# Part 2: p-values and confidence intervals (Week 7)
+
+These questions revisit the experiments above. Figure 3 is the resume experiment. Figure 4 compares the Hawthorne mailer to the Civic Duty mailer, with Civic Duty as the baseline:
+
+**Figure 4**
+
+```{r fig4}
+difference_in_means(primary2006 ~ messages, social, condition1 = 'Civic Duty', condition2 = 'Hawthorne')
+```
+
+**Question 18.** What is the **null hypothesis** a skeptic would hold about the resume experiment in Figure 3?
+
+(a) The race signaled by the name has no effect on the probability of a callback
+(b) The race signaled by the name increases the probability of a callback
+(c) The estimate equals exactly 0.032
+(d) The experiment was not randomized
+
+**Question 19.** Which of the following is the correct interpretation of the p-value (about $0.00004$) in Figure 3?
+
+(a) If the race signaled by the name had no effect, there would be only about a 0.004\% chance of seeing an estimate this large or larger
+(b) There is a 0.004\% chance that the race signaled by the name has no effect
+(c) There is a 99.996\% chance that the result is real
+(d) The probability that the estimate is due to chance is 0.004\%
+
+**Question 20.** Which of the following are true about Figure 3? *Select all*
+
+(a) The t value is the estimate divided by the standard error: $0.0320/0.00778 \approx 4.1$
+(b) The estimate is statistically significant, because the p-value is below 0.05 (and $|t| > 1.96$)
+(c) Statistical significance shows that the effect of the name is large
+(d) The p-value proves that the null hypothesis is false with certainty
+
+**Question 21.** Which of the following is the best interpretation of the 95\% confidence interval ($0.017$ to $0.047$) in Figure 3?
+
+(a) The most pessimistic plausible effect is about 1.7 percentage points and the most optimistic plausible effect is about 4.7 percentage points
+(b) 95\% of employers called back white-named resumes between 1.7\% and 4.7\% more often than Black-named resumes
+(c) The effect is exactly 3.2 percentage points
+(d) There is a 5\% chance that the experiment was done incorrectly
+
+**Question 22.** Using the estimate and standard error in Figure 4 (estimate $0.0078$, standard error $0.0034$), what is the 95\% confidence interval, rounded to four decimals?
+
+(a) $0.0011$ to $0.0145$
+(b) $0.0044$ to $0.0112$
+(c) $0.0078$ to $0.0145$
+(d) $-0.0056$ to $0.0212$
+
+**Question 23.** Which of the following are true?\
+(1) By the usual convention, we reject the null that the Hawthorne and Civic Duty mailers are equally effective, because the p-value in Figure 4 (about 0.02) is below 0.05.\
+(2) A p-value of 0.02 means there is a 2\% chance that the null hypothesis is true.
+
+(a) (1) only
+(b) (2) only
+(c) Both (1) and (2)
+(d) Neither (1) nor (2)
+
+**Question 24.** A campaign is deciding whether to send the Hawthorne mailer instead of the Civic Duty mailer to 100,000 voters. Using the 95\% confidence interval in Figure 4, about how many *additional* voters would vote in the most pessimistic and most optimistic plausible scenarios?
+
+(a) Between about 120 and 1,440 additional voters
+(b) Exactly 784 additional voters
+(c) Between 0 and 7,840 additional voters
+(d) Between 12 and 144 additional voters
+
+**Figure 5**
+
+```{r fig5}
+difference_in_means(primary2006 ~ messages, social, condition1 = 'Control', condition2 = 'Neighbors')
+```
+
+**Question 25.** Figure 5 reports a p-value of $9.6 \times 10^{-199}$ for the Neighbors mailer relative to Control. Which of the following are true? *Select all*
+
+(a) The estimate (about 8.1 percentage points) tells us the size of the effect; the p-value does not
+(b) The p-value is so small partly because the huge sample gives a very small standard error
+(c) A p-value this small means the Neighbors mailer had an enormous effect
+(d) The p-value means that there is a $9.6 \times 10^{-199}$ probability that the null hypothesis is true
+
+**Question 26.** Experiment A finds an effect of 8 percentage points with a standard error of 30 percentage points. Experiment B finds an effect of 5 percentage points with a standard error of 1 percentage point. Which conclusion is best supported?
+
+(a) Experiment B is much more informative: Experiment A's interval is so wide that it is compatible with large harms or large benefits
+(b) We should be more optimistic about A, because its upper bound is much higher
+(c) The two experiments provide equally strong evidence, because both estimates are positive
+(d) Experiment A shows the treatment works better, because its estimate is larger
+
+**Question 27.** An experiment finds an estimate of +3 percentage points with a p-value of 0.30. Which of the following are true? *Select all*
+
+(a) We cannot rule out that a skeptic who believes the treatment does nothing is right
+(b) The +3 points is still our best guess of the treatment effect
+(c) The experiment proves the treatment has no effect
+(d) There is a 30\% chance that the treatment has no effect
+
+# Part 3: Heterogeneous effects and generalizability (Week 8)
+
+The next figures estimate the effect of the Neighbors mailer relative to Control separately for voters who voted in the 2004 primary (Figure 6) and voters who did not vote in the 2004 primary (Figure 7).
+
+**Figure 6**
+
+```{r fig6}
+difference_in_means(primary2006 ~ messages, voted.2004, condition1 = 'Control', condition2 = 'Neighbors')
+```
+
+**Figure 7**
+
+```{r fig7}
+difference_in_means(primary2006 ~ messages, did.not.vote.2004, condition1 = 'Control', condition2 = 'Neighbors')
+```
+
+**Question 28.** Which code produced Figure 6?
+
+(a) `voted.2004 <- subset(social, primary2004 == 1)`\
+    `difference_in_means(primary2006 ~ messages, voted.2004, condition1 = 'Control', condition2 = 'Neighbors')`
+(b) `did.not.vote.2004 <- subset(social, primary2004 == 0)`\
+    `difference_in_means(primary2006 ~ messages, did.not.vote.2004, condition1 = 'Control', condition2 = 'Neighbors')`
+(c) `difference_in_means(primary2006 ~ primary2004, social, condition1 = 0, condition2 = 1)`
+(d) `neighbors <- subset(social, messages == 'Neighbors')`\
+    `difference_in_means(primary2006 ~ primary2004, neighbors, condition1 = 0, condition2 = 1)`
+
+**Question 29.** Based on Figure 6 and Figure 7, which is our best guess about the effect of the Neighbors mailer?
+
+(a) It was larger among voters who voted in the 2004 primary (about 9.7 points) than among those who did not (about 6.9 points)
+(b) It was larger among voters who did not vote in the 2004 primary
+(c) It was about the same in both groups, because both are statistically significant
+(d) It cannot be estimated for either group, because voting in 2004 was not randomly assigned
+
+**Question 30.** Which of the following are true?\
+(1) Within each subgroup, the estimated effect of the mailer is causal, because the mailer was randomly assigned.\
+(2) The comparison of the effect between 2004 voters and non-voters shows that voting in 2004 *causes* people to respond more strongly to mailers.
+
+(a) (1) only
+(b) (2) only
+(c) Both (1) and (2)
+(d) Neither (1) nor (2)
+
+**Question 31.** A researcher tests whether a treatment works in 40 different subgroups of the data and finds 2 statistically significant effects. Suppose the treatment actually has no effect for anyone. About how many significant subgroup results (at $p < 0.05$) would we expect from chance alone, and what is this problem called?
+
+(a) About 2; p-hacking
+(b) About 0; omitted variable bias
+(c) About 20; selection bias
+(d) About 40; reverse causation
+
+**Question 32.** Which of the following would help reduce the risk of p-hacking when looking for heterogeneous effects? *Select all*
+
+(a) Choosing the subgroups to examine before running the experiment
+(b) Being more skeptical of a p-value just under 0.05 when many subgroups have been tested
+(c) Testing as many subgroups as possible and reporting only the significant ones
+(d) Using a bigger sample, since that guarantees no false positives
+
+**Question 33.** Figure 5 estimates the effect of the Neighbors mailer in an August 2006 primary in Michigan. Which of the following are reasons the effect might be different in a 2024 presidential general election in a swing state? *Select all*
+
+(a) Voters in a swing state receive huge amounts of other campaign mail, so one more mailer may matter less
+(b) Turnout is already much higher in a presidential general election, leaving less room for a mailer to raise it
+(c) The people who vote in a presidential election are different from the people who vote in a low-turnout primary
+(d) Because the original experiment was randomized, the result automatically generalizes to any election
+
+**Question 34.** A meta-analysis looks at two experiments. Experiment 1 estimates an effect of 8 percentage points with a standard error of 30. Experiment 2 estimates 5 percentage points with a standard error of 1. About what is the precision-weighted average effect?
+
+(a) 6.5
+(b) 5.0
+(c) 8.0
+(d) 13
+
+**Question 35.** Which of the following are true?\
+(1) Conducting a meta-analysis aggregates the findings of previous research.\
+(2) Conducting a meta-analysis eliminates the biases from flawed research designs.
+
+(a) (1) only
+(b) (2) only
+(c) Both (1) and (2)
+(d) Neither (1) nor (2)
+
+# Part 4: Describing populations (Week 9)
+
+**Question 36.** Which of the following are true about the *Literary Digest* poll, which surveyed 2.2 million people in 1936 and wrongly predicted that Landon would win? *Select all*
+
+(a) Its sample was biased toward wealthier Americans (for example, magazine subscribers), and a larger sample does not fix that kind of bias
+(b) A sample can be huge and still produce an answer that is far from the truth
+(c) The poll was wrong because 2.2 million people is too small a sample
+(d) A random sample of just 100 people would have been less accurate than the Digest's poll
+
+**Question 37.** A pollster draws a random sample of 1,000 people from a voter file and calls each of them, but only 5\% pick up, and the people who pick up tend to be older than the people who do not. Which problem does this describe?
+
+(a) Non-response bias
+(b) Sample selection bias
+(c) Reverse causation
+(d) There is no bias, because the original sample was random
+
+**Question 38.** A mayor asks everyone who comes to a town hall meeting whether they support a new bus lane and concludes that residents oppose it. Which problem is the biggest threat to this conclusion?
+
+(a) Sample selection bias: people who choose to attend a town hall differ from residents overall
+(b) Omitted variable bias in a regression
+(c) Noise, because town halls are small
+(d) Reverse causation: opposing the bus lane causes people to attend
+
+**Question 39.** A survey sample is 75\% male and 25\% not male, while the population is 50\% male and 50\% not male. Relative to each male respondent, about how much should each non-male respondent count in a weighted analysis?
+
+(a) $1/3$ as much
+(b) The same amount
+(c) 3 times as much
+(d) 25 times as much
+
+**Question 40.** Three survey respondents answered a yes/no question ($1$ = yes). Respondent 1 answered $1$ and has weight 1. Respondent 2 answered $0$ and has weight 1. Respondent 3 answered $0$ and has weight 2. What is the weighted mean?
+
+(a) 0.33
+(b) 0.25
+(c) 0.50
+(d) 1.00
+
+**Question 41.** Which of the following are true?\
+(1) Weights count under-represented groups more so that the sample looks more like the population on the variables we weight on.\
+(2) After weighting, a sample is guaranteed to be representative on every variable, even ones that were not used for weighting.
+
+(a) (1) only
+(b) (2) only
+(c) Both (1) and (2)
+(d) Neither (1) nor (2)
+
+The next question asks a *descriptive* question with the social pressure data: did men and women differ in whether they voted in the 2004 primary? Because the baseline is `'female'` and the comparison group is `'male'`, the estimate is the male average minus the female average.
+
+**Figure 8**
+
+```{r fig8}
+difference_in_means(primary2004 ~ sex, social, condition1 = 'female', condition2 = 'male')
+```
+
+**Question 42.** Which of the following is the correct interpretation of the estimate in Figure 8?
+
+(a) In this sample, men were about 0.16 percentage points more likely than women to have voted in the 2004 primary
+(b) Men are 0.16\% more likely to vote than women in the US
+(c) Women were 0.16 percentage points more likely to have voted in the 2004 primary
+(d) Being male causes people to vote at higher rates
+
+**Question 43.** Which of the following are true about Figure 8? *Select all*
+
+(a) The difference is not statistically significant, because the p-value (about 0.37) is above 0.05
+(b) The 95\% confidence interval (about $-0.19$ to $0.51$ percentage points) includes 0
+(c) This shows that men and women voted at exactly the same rates in the population
+(d) The p-value means there is a 37\% chance that men and women do not differ
+
+# Part 5: Scatterplots and regression (Weeks 10--11)
+
+The next questions use real data on 173 US House elections in 1988 (the `vote1` dataset in the `wooldridge` R package). Each row is one election with two candidates, called candidate A and candidate B.
+
+- `voteA`: the percent of the vote candidate A received
+- `expendA`, `expendB`: how much candidate A and candidate B spent on their campaigns, in *thousands of dollars*
+- `prtystrA`: the percent of the vote that candidate A's party's presidential candidate received in the district in the previous presidential election (a measure of how strong A's party is in the district)
+
+**Figure 9**
+
+```{r fig9, fig.alt="Scatterplot of expendA (x-axis, candidate A campaign spending in thousands of dollars, from 0 to about 1,500) against voteA (y-axis, percent of the vote, about 15 to 85) for 173 House races, with a blue upward-sloping line of best fit and a gray uncertainty band. The line rises from about 43 at zero spending to about 78 at 1,470. The points are widely scattered and not straight-line shaped: many low-spending candidates have vote shares below 40, many candidates spending 100 to 500 have vote shares of 60 to 80, and the few candidates spending over 1,000 have vote shares between about 49 and 67.", fig.width=6, fig.height=4}
+spending.plot <- qplot(expendA, voteA, data = vote1) + geom_smooth(method = 'lm', formula = y ~ x)
+spending.plot
+```
+
+**Question 44.** Which pair of commands correctly makes a scatterplot with `expendA` on the x-axis and `voteA` on the y-axis, and then runs a regression predicting `voteA` from `expendA`?
+
+(a) `qplot(expendA, voteA, data = vote1)` and `lm(voteA ~ expendA, data = vote1)`
+(b) `qplot(voteA, expendA, data = vote1)` and `lm(voteA ~ expendA, data = vote1)`
+(c) `qplot(expendA, voteA, data = vote1)` and `lm(expendA ~ voteA, data = vote1)`
+(d) `qplot(voteA, expendA, data = vote1)` and `lm(expendA ~ voteA, data = vote1)`
+
+**Question 45.** Which of the following is true about the line in Figure 9?
+
+(a) It is our best guess of `voteA` for each value of `expendA`
+(b) It connects the highest and lowest points in the data
+(c) It shows that spending causes candidates to win more of the vote
+(d) It shows the exact vote share for every candidate
+
+**Question 46.** In Figure 9, a straight line is not a perfect summary of the pattern. Which of the following is a pattern in the points that the line does **not** capture?
+
+(a) Many candidates who spend little have low vote shares, many who spend a moderate amount have high vote shares, and the few candidates who spend over 1,000 have middling vote shares
+(b) Every point falls exactly on the line
+(c) Candidates who spend more always receive a lower vote share
+(d) The data contain only two possible values of `voteA`
+
+**Question 47.** Because `expendA` is measured in thousands of dollars, a prediction for a candidate who spends \$5 million (`expendA = 5000`) would be unreliable. Why?
+
+(a) The highest spending in the data is about 1,470 thousand dollars, so this would be extrapolating far beyond the data
+(b) Regression cannot make predictions for any value of `expendA`
+(c) The predicted vote share would be negative
+(d) The line of best fit changes whenever we ask for a new prediction
+
+**Figure 10**
+
+```{r fig10}
+summary(lm(voteA ~ expendA, data = vote1))
+```
+
+**Question 48.** Using Figure 10, which is the best interpretation of the coefficient on `expendA` (about 0.0236)?
+
+(a) Candidates who spent \$1,000 more received, on average, about 0.024 percentage points more of the vote in these data
+(b) Spending an additional \$1,000 *causes* about 0.024 percentage points more of the vote
+(c) Candidates who spent \$1 more received 0.0236 more percentage points of the vote
+(d) The average candidate in these data received 0.0236\% of the vote
+
+**Question 49.** Using Figure 10, what vote share would the regression predict for a candidate who spent \$500,000 (`expendA = 500`)?
+
+(a) 43.2
+(b) 55.0
+(c) 66.0
+(d) 11.8
+
+**Question 50.** In Figure 10, how should we interpret the `(Intercept)` of about 43.2?
+
+(a) The regression's best guess of `voteA` for a candidate who spent \$0
+(b) The average amount spent by candidates
+(c) The effect of spending on vote share
+(d) The standard error of the estimate
+
+**Question 51.** Which of the following are reasons why the relationship in Figure 10 may **not** be causal? *Select all*
+
+(a) Omitted variable bias: for example, the strength of a candidate's party in the district could affect both spending and vote share
+(b) Reverse causation: candidates who expect to do well may find it easier to raise money
+(c) The sample is too small to run a regression
+(d) The relationship is statistically significant
+
+**Question 52.** A researcher adds random noise to the outcome variable and re-runs a bivariate regression. Which of the following are true?\
+(1) The slope of the line of best fit will be about the same.\
+(2) The correlation between the variables will be about the same.
+
+(a) (1) only
+(b) (2) only
+(c) Both (1) and (2)
+(d) Neither (1) nor (2)
+
+The next figure adds the other candidate's spending (`expendB`) and party strength to the regression.
+
+**Figure 11**
+
+```{r fig11}
+summary(lm(voteA ~ expendA + expendB + prtystrA, data = vote1))
+```
+
+**Question 53.** In Figure 11, what is the best interpretation of the coefficient on `expendA` (about 0.0349)?
+
+(a) Among races where candidate B's spending and A's party strength are the same, candidates who spent \$1,000 more received about 0.035 percentage points more of the vote on average
+(b) Spending \$1,000 more causes candidate A to receive 0.035 percentage points more of the vote
+(c) Candidates who spent \$1,000 more received 0.035 percentage points more of the vote, regardless of the other variables
+(d) It is the average of candidate A's spending
+
+**Question 54.** The coefficient on `expendA` is about 0.0236 in Figure 10 but about 0.0349 in Figure 11. Which is the best explanation?
+
+(a) The bivariate regression left out variables (like the opponent's spending) that are related to both `expendA` and `voteA`, so the estimates differ once they are included
+(b) The second regression is just a different sample of the same elections
+(c) Adding more variables to a regression always gives the correct causal estimate
+(d) The difference is only due to rounding
+
+**Question 55.** Using Figure 11, what is the best interpretation of the coefficient on `expendB` (about $-0.0349$)?
+
+(a) Holding candidate A's spending and party strength constant, races where candidate B spent \$1,000 more had about 0.035 percentage points less of the vote for candidate A, on average
+(b) Candidate B's spending has no statistically significant relationship with `voteA`
+(c) Candidate B spending \$1,000 more causes candidate A to lose exactly 0.035 percentage points
+(d) A's vote share goes up by 0.035 for every \$1,000 candidate B spends
+
+**Question 56.** Using Figure 11, what vote share would the regression predict for a candidate when both candidates spent \$300,000 (`expendA = 300` and `expendB = 300`) and `prtystrA = 50`?
+
+(a) About 50.4
+(b) About 33.3
+(c) About 60.9
+(d) About 17.1
+
+**Question 57.** Which of the following are true about multivariate regression with observational data?\
+(1) Controlling for additional variables can reduce omitted variable bias.\
+(2) Once we control for a few important variables, we can be sure that no omitted variable bias remains.
+
+(a) (1) only
+(b) (2) only
+(c) Both (1) and (2)
+(d) Neither (1) nor (2)
+
+The next questions analyze the social pressure *experiment* with a regression instead of `difference_in_means()`.
+
+**Figure 12**
+
+```{r fig12}
+summary(lm(primary2006 ~ messages, data = social))
+```
+
+**Question 58.** In Figure 12, which condition is the baseline (the omitted category) that all of the coefficients are compared to?
+
+(a) Control
+(b) Civic Duty
+(c) Hawthorne
+(d) Neighbors
+
+**Question 59.** What is the best interpretation of the `(Intercept)` of about 0.315 in Figure 12?
+
+(a) The average 2006 turnout in the baseline group (voters who received the Civic Duty mailer) was about 31.5\%
+(b) The average 2006 turnout in the Control group was about 31.5\%
+(c) The effect of the Civic Duty mailer relative to no mailer was 31.5 percentage points
+(d) Overall turnout in the sample was 31.5\%
+
+**Question 60.** Using Figure 12, what is the estimated effect of the Neighbors mailer relative to the *Control* group?
+
+(a) 0.063
+(b) About 0.081
+(c) About $-0.018$
+(d) 0.315
+
+**Question 61.** Using the estimate and standard error for `messagesHawthorne` in Figure 12 (estimate 0.0078, standard error 0.0033), what is the 95\% confidence interval, rounded to three decimals?
+
+(a) $0.001$ to $0.014$
+(b) $0.005$ to $0.011$
+(c) $0.000$ to $0.008$
+(d) $-0.013$ to $0.029$
+
+# Part 6: Reading regression tables (Week 12)
+
+**Figure 13**
+
+```{r fig13}
+model.1 <- lm(voteA ~ expendA, data = vote1)
+model.2 <- lm(voteA ~ expendA + prtystrA, data = vote1)
+model.3 <- lm(voteA ~ expendA + expendB + prtystrA, data = vote1)
+stargazer(model.1, model.2, model.3, type = 'text')
+```
+
+**Question 62.** How many separate regressions are reported in Figure 13?
+
+(a) 1
+(b) 2
+(c) 3
+(d) 4
+
+**Question 63.** Which of the following is true about the blank cells in the `expendB` row of Figure 13?
+
+(a) `expendB` was not included in regressions (1) and (2)
+(b) `expendB` had a coefficient of exactly zero in regressions (1) and (2)
+(c) `expendB` was not statistically significant in regressions (1) and (2)
+(d) There is an error in the table
+
+**Question 64.** In column (3) of Figure 13, the `expendA` row reads `0.035***` with `(0.003)` below it. Which of the following are true? *Select all*
+
+(a) The number in parentheses is the standard error
+(b) The coefficient is statistically significant at the 0.01 level (the t-statistic is roughly 0.035/0.003, which is much bigger than 1.96)
+(c) The number in parentheses is the p-value
+(d) 0.003 is the average amount candidate A spent
+
+**Question 65.** What does 173 next to "Observations" mean in Figure 13?
+
+(a) The regressions use 173 House elections, one row of data per election
+(b) 173 candidates spent more than average
+(c) The coefficient on `expendA` is 173
+(d) 173 variables are included in each regression
+
+**Question 66.** What is the difference between column (1) and column (2) in Figure 13, and what happens to the `expendA` coefficient?
+
+(a) Column (2) adds `prtystrA` as a control variable; the coefficient on `expendA` falls from 0.024 to 0.020
+(b) Column (2) uses a different outcome variable; the coefficient on `expendA` stays the same
+(c) Column (2) drops `expendA`; the coefficient falls to zero
+(d) Column (2) uses a different set of elections; the coefficient on `expendA` rises
+
+**Question 67.** Which of the following are true?\
+(1) The $R^2$ in column (3) of Figure 13 (0.569) is higher than in column (1) (0.156), so the variables in column (3) explain more of the variation in `voteA`.\
+(2) A higher $R^2$ shows that the variables in the regression cause the outcome.
+
+(a) (1) only
+(b) (2) only
+(c) Both (1) and (2)
+(d) Neither (1) nor (2)
+
+**Figure 14**
+
+```{r fig14}
+experiment.1 <- lm(primary2006 ~ messages, data = social)
+experiment.2 <- lm(primary2006 ~ messages + sex + yearofbirth + primary2004 + hhsize, data = social)
+stargazer(experiment.1, experiment.2, type = 'text')
+```
+
+**Question 68.** Which coefficients in column (2) of Figure 14 can be interpreted as causal effects?
+
+(a) The `messages` coefficients, because the mailers were randomly assigned
+(b) All of the coefficients, because the data come from an experiment
+(c) Only `primary2004`, since it has the largest coefficient
+(d) None of them, since regressions can never show causal effects
+
+**Question 69.** Why might researchers report column (2) of Figure 14, which adds control variables to the experiment?\
+(1) Including control variables can increase the precision of the treatment effect estimates.\
+(2) Including control variables is necessary for the estimates to be unbiased, because otherwise the treatment and control groups might differ.
+
+(a) (1) only
+(b) (2) only
+(c) Both (1) and (2)
+(d) Neither (1) nor (2)
+
+**Question 70.** In column (2) of Figure 14, the coefficient on `yearofbirth` is $-0.004$. Which is the best interpretation?
+
+(a) Among voters with the same mailer, sex, 2004 voting history, and household size, voters born one year later were about 0.4 percentage points less likely to vote in 2006 on average
+(b) Being born one year later causes a voter to be 0.4 percentage points less likely to vote
+(c) Voters were randomly assigned a birth year
+(d) Voters born later were 0.004 percentage points less likely to vote
+
+**Question 71.** Using the `messagesNeighbors` row of column (1) of Figure 14 (0.063 with a standard error of 0.003), what is the approximate 95\% confidence interval?
+
+(a) About 0.057 to 0.069
+(b) About 0.060 to 0.066
+(c) About 0.063 to 0.069
+(d) About 0.000 to 0.126
+
+# Part 7: Natural experiments, instrumental variables, and regression discontinuity (Week 13)
+
+In the 1960s and 1970s, the US military drafted young men for the Vietnam War using a **lottery**: each birthday was randomly assigned a number, and men with low numbers were much more likely to be drafted. Angrist (1990) used this to study the effect of serving in the military on later earnings.
+
+**Question 72.** In this design, which is the **instrument**, the **treatment variable**, and the **outcome**?
+
+(a) Instrument: draft lottery number\
+    Treatment: military service\
+    Outcome: later earnings
+(b) Instrument: military service\
+    Treatment: draft lottery number\
+    Outcome: later earnings
+(c) Instrument: later earnings\
+    Treatment: military service\
+    Outcome: draft lottery number
+(d) Instrument: military service\
+    Treatment: later earnings\
+    Outcome: draft lottery number
+
+**Question 73.** Which of the following would be a violation of the **exclusion restriction** in this study? *Select all*
+
+(a) Men with low lottery numbers were more likely to enroll in college to get a deferment, and college raises earnings
+(b) Men with low lottery numbers were more likely to move to Canada, which affects their earnings
+(c) Men with low lottery numbers were more likely to be drafted into military service
+(d) Lottery numbers were randomly assigned by birthday
+
+**Question 74.** In an instrumental variables study, what does the **first stage** tell us?
+
+(a) How strongly the instrument changes the treatment variable (for example, how much winning a school lottery raises the years a student spends at the school)
+(b) Whether the treatment variable changes the outcome
+(c) Whether the exclusion restriction is true
+(d) Whether the instrument is randomly assigned
+
+**Question 75.** "In order to determine whether $X$ causes $Y$, you must understand what causes $X$." Which question does this advice tell us to ask?
+
+(a) Who am I comparing to whom, and how did they get the values of $X$ that they did?
+(b) What are all of the other variables that cause $Y$?
+(c) How large is the sample?
+(d) How many control variables did the study include?
+
+**Question 76.** Which statement about instrumental variables estimates compared to ordinary regression estimates is most accurate?
+
+(a) IV estimates usually rely on weaker assumptions than regression on observational data, but they usually have larger standard errors
+(b) IV estimates always have smaller standard errors than regression estimates
+(c) IV estimates are as credible as a randomized experiment in every case
+(d) IV estimates do not require any assumptions
+
+Now a regression discontinuity design. Lee (2008) studied US Senate elections: does narrowly winning an election give a party an advantage in the next election for that seat? The data (the `rdrobust_RDsenate` dataset in the `rdrobust` R package) have one row per Senate race.
+
+- `margin`: the Democratic candidate's margin of victory, in percentage points (positive = Democrat won, negative = Democrat lost)
+- `vote`: the Democratic share of the vote in the *next* election for that seat
+- `dem_won`: `1` if `margin` is positive, `0` if not (created in the code)
+
+**Figure 15**
+
+```{r fig15, fig.alt="Scatterplot of margin (x-axis, Democratic margin of victory in percentage points, from -25 to 25) against vote (y-axis, Democratic vote share in the next election, 0 to 100) for U.S. Senate races. A dashed vertical line marks a margin of 0. A blue line of best fit is drawn on each side of 0 and both slope upward. The left line ends near 45 at the cutoff and the right line starts near 53, so there is a visible jump up at 0. The points are widely scattered around both lines.", fig.width=6, fig.height=4}
+rdd.plot <- qplot(margin, vote, data = subset(senate, abs(margin) < 25)) + geom_smooth(aes(group = dem_won), method = 'lm', formula = y ~ x) + geom_vline(xintercept = 0, linetype = 'dashed')
+rdd.plot
+```
+
+**Question 77.** In the regression discontinuity design behind Figure 15, what is the running variable, the cutoff, and the treatment?
+
+(a) Running variable: `margin`\
+    Cutoff: 0\
+    Treatment: the Democrat winning the election (`dem_won`)
+(b) Running variable: `vote`\
+    Cutoff: 50\
+    Treatment: `margin`
+(c) Running variable: `dem_won`\
+    Cutoff: 0\
+    Treatment: `vote`
+(d) Running variable: `margin`\
+    Cutoff: 0\
+    Treatment: `vote`
+
+**Question 78.** Why do regression discontinuity studies compare candidates who *narrowly* won to candidates who *narrowly* lost, instead of comparing all winners to all losers?
+
+(a) Races decided by a tiny margin are essentially a coin flip, so narrow winners and narrow losers are similar except for who won, while landslide winners differ in many ways
+(b) Narrow races have more voters, which makes the estimate more precise
+(c) Landslide races are not included in the data
+(d) Narrow winners always have the same vote share as narrow losers
+
+**Figure 16**
+
+```{r fig16}
+difference_in_means(vote ~ dem_won, close.races, condition1 = 0, condition2 = 1)
+```
+
+**Question 79.** Figure 16 estimates the effect among races decided by less than 2 percentage points. Which is the best interpretation of the estimate (about 10.2)?
+
+(a) Among close races, Democratic candidates who narrowly won received about 10 percentage points more of the vote in the next election than Democratic candidates who narrowly lost
+(b) Democratic candidates who won by any margin received 10.2 more percentage points in the next election
+(c) The Democratic candidates who narrowly lost received 10.2 more percentage points
+(d) Winning an election increases the vote share in the next election by 10.2\% in every race, including landslides
+
+**Question 80.** Which of the following would threaten the validity of this regression discontinuity design? *Select all*
+
+(a) A party could influence the vote count when a race is very close, so that narrow winners are not like narrow losers
+(b) Candidates could precisely control their final vote margin to land just above 0
+(c) Races with large margins have different vote shares in the next election than close races
+(d) More Democrats won than lost in the data (750 versus 640 races)
+
+**Question 81.** Which of the following are checks of an RDD's validity? *Select all*
+
+(a) Checking that other variables (such as the previous election's vote share) look similar just above and just below the cutoff
+(b) Checking that there is no unusual bunching of observations on one side of the cutoff
+(c) Checking that the effect is the same for races decided by 1 point and by 50 points
+(d) Making the sample bigger by including every race, whatever its margin
+
+**Question 82.** A researcher re-runs Figure 16 using a much *narrower* window (races decided by less than 0.5 points instead of less than 2). What is the most likely consequence?
+
+(a) The races compared are more similar, but there are fewer of them, so the standard error will probably be larger
+(b) The standard error will get smaller, because narrow races are more precise
+(c) The estimate must be exactly the same
+(d) The estimate becomes causal only with the narrower window
+
+**Question 83.** Which of the following is the main limitation on **generalizing** from this study?
+
+(a) The estimate applies to close elections near the cutoff, which may differ from other elections
+(b) The estimate applies only to the largest landslide races
+(c) The estimate cannot be generalized to any Senate race
+(d) Randomization was not used, so there is no limitation
+
+# Part 8: Difference-in-differences and theories (Week 14)
+
+In April 1992, New Jersey raised its minimum wage from \$4.25 to \$5.05 an hour, while neighboring Pennsylvania did not change its minimum wage. Card and Krueger (1994) surveyed fast-food restaurants in both states before and after the increase. The data come from Imai's *Quantitative Social Science* textbook, with one row per restaurant (358 restaurants).
+
+- `state`: `"NJ"` or `"PA"` (created in the code from `location`)
+- `fullBefore`, `fullAfter`: the number of full-time employees at the restaurant before and after the New Jersey minimum wage increase
+- `full_change`: `fullAfter` minus `fullBefore` (created in the code)
+
+**Figure 17**
+
+```{r fig17}
+aggregate(cbind(fullBefore, fullAfter) ~ state, data = minwage, FUN = mean)
+```
+
+**Question 84.** In this study, which group is the treated group and which is the comparison (control) group?
+
+(a) New Jersey restaurants are treated; Pennsylvania restaurants are the comparison group
+(b) Pennsylvania restaurants are treated; New Jersey restaurants are the comparison group
+(c) Restaurants measured before the increase are treated; restaurants measured after are the comparison group
+(d) There is no comparison group in a difference-in-differences design
+
+**Question 85.** Using Figure 17, what was the change in the average number of full-time employees per restaurant in New Jersey, and in Pennsylvania?
+
+(a) New Jersey: about +0.43; Pennsylvania: about $-2.49$
+(b) New Jersey: about $-2.49$; Pennsylvania: about +0.43
+(c) New Jersey: about 8.41; Pennsylvania: about 8.17
+(d) New Jersey: about +2.93; Pennsylvania: about 0
+
+**Question 86.** Using Figure 17, what is the difference-in-differences estimate of the effect of the New Jersey minimum wage increase on full-time employment?
+
+(a) +0.43
+(b) $-2.49$
+(c) +2.93
+(d) +0.23
+
+**Question 87.** Why not simply compare New Jersey and Pennsylvania restaurants *after* the increase, or look only at New Jersey before and after? *Select all*
+
+(a) Pennsylvania restaurants already had more full-time employees than New Jersey restaurants *before* the increase (about 10.7 versus 8.0), so an after-only comparison is affected by pre-existing differences
+(b) Employment changed in Pennsylvania too (it fell), so looking only at New Jersey over time would blame the minimum wage for changes that happened anyway
+(c) Difference-in-differences requires that restaurants be randomly assigned to states
+(d) A difference-in-differences design eliminates all bias, so the other comparisons are unnecessary
+
+**Question 88.** What does the **parallel trends** assumption mean in this study?
+
+(a) If New Jersey had not raised its minimum wage, full-time employment would have changed by about the same amount in New Jersey as it did in Pennsylvania
+(b) New Jersey and Pennsylvania had the same number of full-time employees before the increase
+(c) Employment stayed constant in both states
+(d) The minimum wage increase had no effect on employment
+
+**Question 89.** Which of the following would be a violation of the parallel trends assumption? *Select all*
+
+(a) A recession hit New Jersey's fast-food industry much harder than Pennsylvania's during 1992
+(b) Fast-food employment was already growing faster in New Jersey than in Pennsylvania in the years before 1992
+(c) Pennsylvania had more full-time employees than New Jersey before the increase
+(d) Both states had their employment affected by the same national economic trend
+
+**Figure 18**
+
+```{r fig18}
+difference_in_means(full_change ~ state, minwage, condition1 = 'PA', condition2 = 'NJ')
+```
+
+**Question 90.** Which of the following are true about Figure 18? *Select all*
+
+(a) The estimate (about 2.9) matches the difference-in-differences calculation from the table of averages, because the outcome is each restaurant's *change* in full-time employees
+(b) The estimate is not statistically significant at the 0.05 level, because the p-value (about 0.09) is above 0.05 and the confidence interval includes 0
+(c) The 95\% confidence interval shows that the minimum wage increase definitely did not reduce employment
+(d) The p-value of 0.09 means there is a 9\% chance that the minimum wage increase had no effect
+
+**Question 91.** Which of the following is an example of a **placebo test** for a difference-in-differences design? *Select all*
+
+(a) Checking whether employment in the two states was already moving in a similar way in several periods *before* the minimum wage increase
+(b) Checking for an "effect" of the New Jersey minimum wage increase on an outcome it should not affect, and hoping to find none
+(c) Checking whether the estimate gets larger when the sample gets larger
+(d) Checking whether restaurants in both states were randomly assigned to their state
+
+**Question 92.** Why can't researchers use a difference-in-differences design in every study?
+
+(a) They need data from multiple time periods, including before the treatment, and a treatment that changes over time
+(b) The method only works with experimental data
+(c) The method requires a sample of at least a million observations
+(d) It cannot be used with outcomes that are numbers
+
+The last questions are about theories and collective action. Two prisoners are interrogated separately. The table shows each prisoner's payoff, in years of prison expressed as negative numbers, so closer to zero is better (Prisoner P's payoff first, then Prisoner Q's).
+
+| | Q confesses | Q does not confess |
+|---|---|---|
+| **P confesses** | $-4, -4$ | $-1, -8$ |
+| **P does not confess** | $-8, -1$ | $-2, -2$ |
+
+**Question 93.** Which of the following are true about this game? *Select all*
+
+(a) Whatever Q does, P gets a better payoff by confessing
+(b) The outcome that is best for the two prisoners as a group (neither confesses) is not what individually rational prisoners choose
+(c) If both prisoners act rationally, they will both choose not to confess
+(d) The game shows that people are irrational
+
+**Question 94.** Six people each receive \$5 and can contribute any amount to a public pot. The pot is doubled and divided evenly among all six. Three people contribute their full \$5 and three contribute nothing. How much money does a person who contributed \$5 end up with, and how much does a person who contributed nothing end up with?
+
+(a) The contributors end with \$5 and the non-contributors end with \$10
+(b) The contributors end with \$10 and the non-contributors end with \$5
+(c) Everyone ends with \$10
+(d) The contributors end with \$15 and the non-contributors end with \$0
+
+**Question 95.** Willer (2009) proposes that people contribute to collective action even though it is not in their short-term material interest because groups reward contributors with higher social status. Which of the following are true?\
+(1) This theory is consistent with rational choice theory (people make the best choice for them given the information available).\
+(2) Under this theory, the contributions are not in the contributor's self-interest at all.
+
+(a) (1) only
+(b) (2) only
+(c) Both (1) and (2)
+(d) Neither (1) nor (2)
+
+**Question 96.** A researcher theorizes that people who know others can see whether they vote are more likely to vote, then mails voters letters that reveal their voting records to neighbors and compares their turnout to a control group. Which of the following correctly labels the parts of the scientific process?
+
+(a) Theory: people care about what others think of whether they vote\
+    Hypothesis: people sent letters revealing their voting records to neighbors will vote more often\
+    Empirical test: the randomized mailer experiment
+(b) Theory: the randomized mailer experiment\
+    Hypothesis: people care about what others think\
+    Empirical test: voting records will be revealed
+(c) Theory: people sent letters will vote more often\
+    Hypothesis: people care about what others think\
+    Empirical test: the randomized mailer experiment
+(d) Theory: the randomized mailer experiment\
+    Hypothesis: the randomized mailer experiment\
+    Empirical test: people care about what others think
+
+```{r answers, echo=FALSE, results="asis", eval=params$show_answers}
+cat("\\newpage\n\n")
+cat(r"--(
+## Answers
+
+**Question 1.** Which of the following best describes a **potential outcome**?
+
+(a) The value of the outcome a particular unit would have had if it had received a particular treatment
+
+    **Correct:** Potential outcomes are what would happen to a specific unit under a specific treatment, and most of them are hypothetical.
+(b) The outcome we actually observe for a unit after treatment
+
+    **Incorrect:** That is the observed outcome, which is only one of the unit's potential outcomes.
+(c) The average outcome among everyone who received the treatment
+
+    **Incorrect:** That is a group average, not a single unit's potential outcome.
+(d) The difference between the treatment group average and the control group average
+
+    **Incorrect:** That is an estimate of the average treatment effect.
+
+**Question 2.** What is the average treatment effect of the mailer for these four voters?
+
+(a) 0.25
+
+    **Incorrect:** This is the average turnout *without* the mailer ($1/4$), not the effect.
+(b) 0.50
+
+    **Correct:** The unit-level effects are $1, 0, 0, 1$, and their average is $2/4 = 0.5$.
+(c) 0.75
+
+    **Incorrect:** This is the average turnout *with* the mailer ($3/4$), not the effect.
+(d) 1.00
+
+    **Incorrect:** Only two of the four voters were affected, so the average effect is not 1.
+
+**Question 3.** Why can't researchers compute these unit-level treatment effects in a real study?
+
+(a) Each voter can only receive one treatment, so we only ever see one of that voter's two potential outcomes
+
+    **Correct:** This is the fundamental problem of causal inference: the other potential outcome is a counterfactual.
+(b) The sample is usually too small
+
+    **Incorrect:** Even an enormous sample cannot reveal a unit's missing potential outcome.
+(c) Treatment effects are not defined for individual people
+
+    **Incorrect:** They are defined (as the difference between a unit's potential outcomes); we just cannot observe them.
+(d) Potential outcomes only exist in randomized experiments
+
+    **Incorrect:** Potential outcomes exist for any treatment. Experiments just help us estimate their averages.
+
+**Question 4.** Which of the following are **causal** questions? *Select all*
+
+(a) Does receiving a mailer showing your neighbors' voting records increase the probability that you vote?
+
+    **Correct:** It asks what happens to the same voters under different treatments.
+(b) Do women vote at higher rates than men?
+
+    **Incorrect:** This is descriptive: it compares groups that already exist and no intervention is involved.
+(c) Would this particular voter have voted if she had not received the mailer?
+
+    **Correct:** This is a counterfactual about one unit's potential outcomes.
+(d) Which state had the highest turnout rate in 2020?
+
+    **Incorrect:** This is descriptive; it does not ask about the effect of any treatment.
+
+**Question 5.** A study of US House incumbents finds that the incumbents who spend more money on their campaigns tend to win a *smaller* share of the vote. Which of the following are possible explanations that do **not** mean spending causes worse results? *Select all*
+
+(a) Reverse causation: incumbents who expect a close race raise and spend more money
+
+    **Correct:** The (expected) outcome causes the spending, not the other way around.
+(b) Omitted variable bias: how competitive the district is could cause both higher spending and a smaller vote share
+
+    **Correct:** A competitive district pushes spending up and the vote share down at the same time.
+(c) Because the correlation is negative, spending must have no effect on vote share
+
+    **Incorrect:** A correlation cannot show that an effect is absent either; a true positive effect could be masked by these other factors.
+(d) Collecting data on every House district in the country would remove the problem
+
+    **Incorrect:** More data reduces noise but does not fix reverse causation or omitted variables.
+
+**Question 6.** A university compares the final exam scores of students who chose to attend optional review sessions with the scores of students who did not, and finds that attendees scored 8 points higher. What is the best critique of the claim that the review sessions caused the higher scores?
+
+(a) Students who choose to attend may be different (e.g., more motivated) than students who do not, so the groups would differ even without the sessions (selection bias)
+
+    **Correct:** The two groups are not comparable because of who selected into them.
+(b) The number of students is too small to compare two averages
+
+    **Incorrect:** The problem is who is in each group, not how many there are.
+(c) Exam scores cannot be compared across groups
+
+    **Incorrect:** Averages of continuous outcomes can be compared; the issue is the comparison group.
+(d) There is no problem: a difference in averages always measures the causal effect
+
+    **Incorrect:** That is only true if the groups are comparable, for example because of random assignment.
+
+**Question 7.** In Figure 1, how many women were assigned to the Hawthorne condition?
+
+(a) 19,064
+
+    **Correct:** Hawthorne row, female column.
+(b) 19,140
+
+    **Incorrect:** This is the number of *men* assigned to the Hawthorne condition.
+(c) 38,204
+
+    **Incorrect:** This is the total number of voters in the Hawthorne condition ($19{,}064 + 19{,}140$).
+(d) 95,419
+
+    **Incorrect:** This is the number of women in the *Control* condition.
+
+**Question 8.** Which of the following are true about Figure 1? *Select all*
+
+(a) The share of women is nearly identical across the four conditions (about 50\% in each), which is what we expect when assignment is random
+
+    **Correct:** Each row is close to half female and half male.
+(b) Random assignment should also balance characteristics the researchers did not measure
+
+    **Correct:** This is a key advantage of experiments: they balance unmeasured omitted variables too.
+(c) The Control group is much larger than the others, so it must differ from the treatment groups in other ways
+
+    **Incorrect:** Group size does not create bias. Voters were randomly placed in each group, whatever its size.
+(d) If the shares of women had differed by a few percentage points, that would prove assignment was not random
+
+    **Incorrect:** Small differences can arise by chance even with perfect randomization.
+
+**Question 9.** Why is comparing the 2006 turnout of the Neighbors group to the 2006 turnout of the Control group free of selection bias?
+
+(a) Voters were randomly assigned to each group, so the two groups have the same potential outcomes on average
+
+    **Correct:** Random assignment makes the groups comparable, apples to apples.
+(b) The sample is very large
+
+    **Incorrect:** A large sample reduces noise but cannot remove bias.
+(c) The voters chose which mailer to receive
+
+    **Incorrect:** If voters chose their groups, selection bias would be a problem.
+(d) The researchers controlled for sex and age in the comparison
+
+    **Incorrect:** Random assignment is what removes selection bias; controls are not needed for that.
+
+**Question 10.** Which of the following are true?\
+(1) In an experiment with random assignment, the treatment and control groups are, on average, identical on characteristics the researchers never measured.\
+(2) Experiments eliminate noise as well as bias.
+
+(a) (1) only
+
+    **Correct:** Randomization removes bias, but experiments still have noise from the luck of the draw.
+(b) (2) only
+
+    **Incorrect:** Statement (2) is false: experiments have no bias but they do have noise.
+(c) Both (1) and (2)
+
+    **Incorrect:** Statement (2) is false: experiments still have noise.
+(d) Neither (1) nor (2)
+
+    **Incorrect:** Statement (1) is true.
+
+**Question 11.** In Figure 2, about what percent of the resumes with Black-sounding names received a callback?
+
+(a) 6.4\%
+
+    **Correct:** Black row: $157/(2278 + 157) = 157/2435 \approx 0.064$.
+(b) 9.6\%
+
+    **Incorrect:** This is the callback rate for resumes with *white*-sounding names ($235/2435$).
+(c) 40.1\%
+
+    **Incorrect:** This is the share of *all* callbacks that went to Black-named resumes ($157/392$), not the callback rate.
+(d) 93.6\%
+
+    **Incorrect:** This is the share of Black-named resumes that did *not* get a callback.
+
+**Question 12.** Which of the following is the correct interpretation of the estimate in Figure 3?
+
+(a) In this experiment, resumes with white-sounding names received callbacks 3.2 percentage points more often than otherwise similar resumes with Black-sounding names
+
+    **Correct:** The estimate is the difference in callback rates, white minus black, because black is `condition1` (the baseline).
+(b) Resumes with white-sounding names were 3.2\% more likely to get a callback (a relative increase of 3.2\%)
+
+    **Incorrect:** The 0.032 is a difference in *percentage points* ($9.65\% - 6.45\%$), not a 3.2\% relative increase.
+(c) Resumes with Black-sounding names received callbacks 3.2 percentage points more often
+
+    **Incorrect:** The sign is reversed. A positive estimate means the `condition2` group (white) is higher.
+(d) Among all job applicants in the US, white applicants are called back 3.2 percentage points more often
+
+    **Incorrect:** This estimate comes from these resumes in this experiment; it does not describe all applicants.
+
+**Question 13.** What would change in the output of Figure 3 if the code used `condition1 = 'white'` and `condition2 = 'black'` instead?
+
+(a) The estimate would be about $-0.032$ and the confidence interval would flip sign; the standard error and p-value would stay the same
+
+    **Correct:** Swapping the baseline reverses the direction of the difference but not its precision.
+(b) The standard error would change sign
+
+    **Incorrect:** A standard error is never negative.
+(c) The p-value would become about 0.96
+
+    **Incorrect:** The p-value is unchanged because the evidence against the null is the same.
+(d) Nothing would change at all
+
+    **Incorrect:** The sign of the estimate and the confidence interval would change.
+
+**Question 14.** In 1936 the *Literary Digest* surveyed 2.2 million people and predicted that Landon would beat Roosevelt in a landslide; Roosevelt won easily. Which of the following are true? *Select all*
+
+(a) The huge sample made the noise in the poll very small, but it did nothing to fix the bias from who was surveyed
+
+    **Correct:** A big sample shrinks the standard error. It cannot fix a sample that is systematically unrepresentative.
+(b) Gallup's much smaller but more representative sample got closer to the truth
+
+    **Correct:** Representativeness mattered more than size.
+(c) The poll missed because 2.2 million respondents is too few to measure a national election
+
+    **Incorrect:** Size was not the problem; the poll was biased.
+(d) The error was due to noise, so repeating the poll would likely have given the right answer
+
+    **Incorrect:** Bias is consistent. Repeating the same method gives the same wrong answer.
+
+**Question 15.** A researcher wants to cut the standard error of a difference-in-means estimate in half. If nothing else changes (including the spread of the outcome and the split between groups), the sample size needs to become...
+
+(a) Twice as large
+
+    **Incorrect:** Doubling the sample only shrinks the standard error by a factor of about 0.71.
+(b) Four times as large
+
+    **Correct:** $\text{SE}$ is proportional to $1/\sqrt{n}$, so halving the SE requires quadrupling $n$.
+(c) Half as large
+
+    **Incorrect:** A smaller sample would make the standard error larger.
+(d) Ten times as large
+
+    **Incorrect:** That would shrink the SE by about a factor of 3.2, more than needed.
+
+**Question 16.** A study's estimate is $0.12$ and its standard error is $0.06$. What is the t-statistic, and is the estimate statistically significant by the usual convention?
+
+(a) $t = 2$; statistically significant, because $|t| > 1.96$
+
+    **Correct:** $t = 0.12/0.06 = 2$, which is larger than 1.96.
+(b) $t = 0.5$; not statistically significant
+
+    **Incorrect:** This divides the standard error by the estimate, which is backwards.
+(c) $t = 0.0072$; not statistically significant
+
+    **Incorrect:** This multiplies the two numbers instead of dividing.
+(d) $t = 2$; not statistically significant, because the p-value is the same as the t-statistic
+
+    **Incorrect:** The t-statistic and p-value are different numbers, and $|t| > 1.96$ is significant.
+
+**Question 17.** A researcher has 10,000 people to divide between a treatment group and a control group. Which split gives the smallest standard error (if the outcome has the same spread in both groups)?
+
+(a) 5,000 treatment and 5,000 control
+
+    **Correct:** For a fixed total sample, equal-sized groups give the most precise estimate.
+(b) 9,000 treatment and 1,000 control
+
+    **Incorrect:** A very small group makes the estimate noisier.
+(c) 1,000 treatment and 9,000 control
+
+    **Incorrect:** A very small group makes the estimate noisier.
+(d) All splits give the same standard error
+
+    **Incorrect:** The standard error depends on the group sizes: $\sqrt{s_1^2/n_1 + s_2^2/n_2}$.
+
+**Question 18.** What is the **null hypothesis** a skeptic would hold about the resume experiment in Figure 3?
+
+(a) The race signaled by the name has no effect on the probability of a callback
+
+    **Correct:** The null is the skeptic's belief that the treatment did nothing.
+(b) The race signaled by the name increases the probability of a callback
+
+    **Incorrect:** That is an alternative hypothesis, what the researchers want to show.
+(c) The estimate equals exactly 0.032
+
+    **Incorrect:** The null is about the true effect, not the estimate we happened to observe.
+(d) The experiment was not randomized
+
+    **Incorrect:** Random assignment is part of the design, not the null hypothesis.
+
+**Question 19.** Which of the following is the correct interpretation of the p-value (about $0.00004$) in Figure 3?
+
+(a) If the race signaled by the name had no effect, there would be only about a 0.004\% chance of seeing an estimate this large or larger
+
+    **Correct:** A p-value is the probability of an estimate at least this large *if the null were true*.
+(b) There is a 0.004\% chance that the race signaled by the name has no effect
+
+    **Incorrect:** A p-value is not the probability that the null hypothesis is true.
+(c) There is a 99.996\% chance that the result is real
+
+    **Incorrect:** A p-value cannot tell us the probability that our hypothesis is right.
+(d) The probability that the estimate is due to chance is 0.004\%
+
+    **Incorrect:** This is a common misreading. The p-value assumes the null and asks how unusual the data are.
+
+**Question 20.** Which of the following are true about Figure 3? *Select all*
+
+(a) The t value is the estimate divided by the standard error: $0.0320/0.00778 \approx 4.1$
+
+    **Correct:** That is the definition of the t-statistic.
+(b) The estimate is statistically significant, because the p-value is below 0.05 (and $|t| > 1.96$)
+
+    **Correct:** Both rules of thumb agree.
+(c) Statistical significance shows that the effect of the name is large
+
+    **Incorrect:** Significance says the estimate would be unlikely by chance, not that the effect is big.
+(d) The p-value proves that the null hypothesis is false with certainty
+
+    **Incorrect:** Even a tiny p-value cannot prove the null is false with certainty.
+
+**Question 21.** Which of the following is the best interpretation of the 95\% confidence interval ($0.017$ to $0.047$) in Figure 3?
+
+(a) The most pessimistic plausible effect is about 1.7 percentage points and the most optimistic plausible effect is about 4.7 percentage points
+
+    **Correct:** The bottom and top of the interval are the most pessimistic and most optimistic plausible effects.
+(b) 95\% of employers called back white-named resumes between 1.7\% and 4.7\% more often than Black-named resumes
+
+    **Incorrect:** The interval describes our uncertainty about the average effect, not the behavior of 95\% of employers.
+(c) The effect is exactly 3.2 percentage points
+
+    **Incorrect:** The interval shows a range of plausible values; 3.2 is only our best guess.
+(d) There is a 5\% chance that the experiment was done incorrectly
+
+    **Incorrect:** The 5\% refers to how often such intervals miss the true effect, not to mistakes in the study.
+
+**Question 22.** Using the estimate and standard error in Figure 4 (estimate $0.0078$, standard error $0.0034$), what is the 95\% confidence interval, rounded to four decimals?
+
+(a) $0.0011$ to $0.0145$
+
+    **Correct:** $0.0078 \pm 1.96 \times 0.0034 = 0.0078 \pm 0.0067$.
+(b) $0.0044$ to $0.0112$
+
+    **Incorrect:** This uses $\pm 1$ standard error instead of $\pm 1.96$.
+(c) $0.0078$ to $0.0145$
+
+    **Incorrect:** The interval must be centered on the estimate: it extends the same distance above and below.
+(d) $-0.0056$ to $0.0212$
+
+    **Incorrect:** This uses about $\pm 4$ standard errors, which is too wide.
+
+**Question 23.** Which of the following are true?\
+(1) By the usual convention, we reject the null that the Hawthorne and Civic Duty mailers are equally effective, because the p-value in Figure 4 (about 0.02) is below 0.05.\
+(2) A p-value of 0.02 means there is a 2\% chance that the null hypothesis is true.
+
+(a) (1) only
+
+    **Correct:** (1) is the usual convention. (2) is a misreading: the p-value is not the probability that the null is true.
+(b) (2) only
+
+    **Incorrect:** Statement (2) misreads the p-value.
+(c) Both (1) and (2)
+
+    **Incorrect:** Statement (2) misreads the p-value.
+(d) Neither (1) nor (2)
+
+    **Incorrect:** Statement (1) is correct.
+
+**Question 24.** A campaign is deciding whether to send the Hawthorne mailer instead of the Civic Duty mailer to 100,000 voters. Using the 95\% confidence interval in Figure 4, about how many *additional* voters would vote in the most pessimistic and most optimistic plausible scenarios?
+
+(a) Between about 120 and 1,440 additional voters
+
+    **Correct:** $100{,}000 \times 0.00123 \approx 123$ and $100{,}000 \times 0.01444 \approx 1{,}444$.
+(b) Exactly 784 additional voters
+
+    **Incorrect:** $100{,}000 \times 0.0078 = 784$ is only the best guess; the question asks for the plausible range.
+(c) Between 0 and 7,840 additional voters
+
+    **Incorrect:** The interval does not include 0, and the range is far too wide.
+(d) Between 12 and 144 additional voters
+
+    **Incorrect:** This is off by a factor of 10 (it uses 10,000 voters).
+
+**Question 25.** Figure 5 reports a p-value of $9.6 \times 10^{-199}$ for the Neighbors mailer relative to Control. Which of the following are true? *Select all*
+
+(a) The estimate (about 8.1 percentage points) tells us the size of the effect; the p-value does not
+
+    **Correct:** The p-value measures how surprising the estimate would be under the null, not how big the effect is.
+(b) The p-value is so small partly because the huge sample gives a very small standard error
+
+    **Correct:** A small standard error produces a large t-statistic and a tiny p-value.
+(c) A p-value this small means the Neighbors mailer had an enormous effect
+
+    **Incorrect:** A tiny p-value can accompany a modest effect when the sample is large.
+(d) The p-value means that there is a $9.6 \times 10^{-199}$ probability that the null hypothesis is true
+
+    **Incorrect:** A p-value is not the probability that the null is true.
+
+**Question 26.** Experiment A finds an effect of 8 percentage points with a standard error of 30 percentage points. Experiment B finds an effect of 5 percentage points with a standard error of 1 percentage point. Which conclusion is best supported?
+
+(a) Experiment B is much more informative: Experiment A's interval is so wide that it is compatible with large harms or large benefits
+
+    **Correct:** Experiment A's interval is roughly $-51$ to $67$ points, while Experiment B's is roughly 3 to 7 points.
+(b) We should be more optimistic about A, because its upper bound is much higher
+
+    **Incorrect:** A wide interval reflects a lot of noise, not a better treatment.
+(c) The two experiments provide equally strong evidence, because both estimates are positive
+
+    **Incorrect:** The standard errors differ enormously, so the strength of evidence differs too.
+(d) Experiment A shows the treatment works better, because its estimate is larger
+
+    **Incorrect:** Its estimate is larger, but with a standard error of 30 points the estimate is almost uninformative.
+
+**Question 27.** An experiment finds an estimate of +3 percentage points with a p-value of 0.30. Which of the following are true? *Select all*
+
+(a) We cannot rule out that a skeptic who believes the treatment does nothing is right
+
+    **Correct:** A p-value of 0.30 is not statistically significant.
+(b) The +3 points is still our best guess of the treatment effect
+
+    **Correct:** Not being able to convince the skeptic does not make the estimate worthless.
+(c) The experiment proves the treatment has no effect
+
+    **Incorrect:** A non-significant result is inconclusive, not proof of no effect.
+(d) There is a 30\% chance that the treatment has no effect
+
+    **Incorrect:** A p-value is not the probability that the null is true.
+
+**Question 28.** Which code produced Figure 6?
+
+(a) `voted.2004 <- subset(social, primary2004 == 1)`\
+    `difference_in_means(primary2006 ~ messages, voted.2004, condition1 = 'Control', condition2 = 'Neighbors')`
+
+    **Correct:** It first subsets to voters with `primary2004 == 1`, then estimates the effect in that subset.
+(b) `did.not.vote.2004 <- subset(social, primary2004 == 0)`\
+    `difference_in_means(primary2006 ~ messages, did.not.vote.2004, condition1 = 'Control', condition2 = 'Neighbors')`
+
+    **Incorrect:** This subsets to voters who did *not* vote in 2004, which is Figure 7.
+(c) `difference_in_means(primary2006 ~ primary2004, social, condition1 = 0, condition2 = 1)`
+
+    **Incorrect:** This compares 2006 turnout of 2004 voters and non-voters. It is not the effect of the mailer.
+(d) `neighbors <- subset(social, messages == 'Neighbors')`\
+    `difference_in_means(primary2006 ~ primary2004, neighbors, condition1 = 0, condition2 = 1)`
+
+    **Incorrect:** This only looks at voters who got the Neighbors mailer, so there is no control group to compare with.
+
+**Question 29.** Based on Figure 6 and Figure 7, which is our best guess about the effect of the Neighbors mailer?
+
+(a) It was larger among voters who voted in the 2004 primary (about 9.7 points) than among those who did not (about 6.9 points)
+
+    **Correct:** The estimates are 0.0965 and 0.0693.
+(b) It was larger among voters who did not vote in the 2004 primary
+
+    **Incorrect:** The estimate is smaller for non-voters (0.0693) than for voters (0.0965).
+(c) It was about the same in both groups, because both are statistically significant
+
+    **Incorrect:** Both are significant, but the estimates are different sizes.
+(d) It cannot be estimated for either group, because voting in 2004 was not randomly assigned
+
+    **Incorrect:** The mailer was randomized, so the effect within each subgroup can be estimated.
+
+**Question 30.** Which of the following are true?\
+(1) Within each subgroup, the estimated effect of the mailer is causal, because the mailer was randomly assigned.\
+(2) The comparison of the effect between 2004 voters and non-voters shows that voting in 2004 *causes* people to respond more strongly to mailers.
+
+(a) (1) only
+
+    **Correct:** Voting in 2004 was not randomly assigned, so differences between subgroups are descriptive.
+(b) (2) only
+
+    **Incorrect:** (2) is false: the subgroup comparison is not causal.
+(c) Both (1) and (2)
+
+    **Incorrect:** (2) is false. People who voted in 2004 differ from non-voters in many other ways.
+(d) Neither (1) nor (2)
+
+    **Incorrect:** (1) is true because the subgroups were defined before treatment and the mailer was randomized.
+
+**Question 31.** A researcher tests whether a treatment works in 40 different subgroups of the data and finds 2 statistically significant effects. Suppose the treatment actually has no effect for anyone. About how many significant subgroup results (at $p < 0.05$) would we expect from chance alone, and what is this problem called?
+
+(a) About 2; p-hacking
+
+    **Correct:** $40 \times 0.05 = 2$. Testing many hypotheses makes false positives likely.
+(b) About 0; omitted variable bias
+
+    **Incorrect:** With 40 tests at the 0.05 level we should expect about 2 false positives.
+(c) About 20; selection bias
+
+    **Incorrect:** Only about 5\% of true nulls will be significant, which is 2 of 40.
+(d) About 40; reverse causation
+
+    **Incorrect:** Only about 5\% of true nulls will be significant.
+
+**Question 32.** Which of the following would help reduce the risk of p-hacking when looking for heterogeneous effects? *Select all*
+
+(a) Choosing the subgroups to examine before running the experiment
+
+    **Correct:** Subgroups decided in advance are less likely to be cherry-picked.
+(b) Being more skeptical of a p-value just under 0.05 when many subgroups have been tested
+
+    **Correct:** A p-value of 0.05 means much less after many tests.
+(c) Testing as many subgroups as possible and reporting only the significant ones
+
+    **Incorrect:** This is exactly p-hacking.
+(d) Using a bigger sample, since that guarantees no false positives
+
+    **Incorrect:** A bigger sample reduces noise but false positives still occur at about the 5\% rate.
+
+**Question 33.** Figure 5 estimates the effect of the Neighbors mailer in an August 2006 primary in Michigan. Which of the following are reasons the effect might be different in a 2024 presidential general election in a swing state? *Select all*
+
+(a) Voters in a swing state receive huge amounts of other campaign mail, so one more mailer may matter less
+
+    **Correct:** Context: the baseline level of treatment is very different.
+(b) Turnout is already much higher in a presidential general election, leaving less room for a mailer to raise it
+
+    **Correct:** The effect can differ when the baseline is different.
+(c) The people who vote in a presidential election are different from the people who vote in a low-turnout primary
+
+    **Correct:** Effects can differ across people (heterogeneous effects).
+(d) Because the original experiment was randomized, the result automatically generalizes to any election
+
+    **Incorrect:** Randomization gives a valid estimate for that study; it does not guarantee the effect would be the same elsewhere.
+
+**Question 34.** A meta-analysis looks at two experiments. Experiment 1 estimates an effect of 8 percentage points with a standard error of 30. Experiment 2 estimates 5 percentage points with a standard error of 1. About what is the precision-weighted average effect?
+
+(a) 6.5
+
+    **Incorrect:** This is the simple average of 8 and 5, which gives both experiments equal weight.
+(b) 5.0
+
+    **Correct:** Precision is $1/\text{SE}^2$: about $0.001$ for Experiment 1 and $1$ for Experiment 2, so Experiment 2 dominates.
+(c) 8.0
+
+    **Incorrect:** Experiment 1 is extremely imprecise, so it gets almost no weight.
+(d) 13
+
+    **Incorrect:** A weighted average must fall between the two estimates.
+
+**Question 35.** Which of the following are true?\
+(1) Conducting a meta-analysis aggregates the findings of previous research.\
+(2) Conducting a meta-analysis eliminates the biases from flawed research designs.
+
+(a) (1) only
+
+    **Correct:** Meta-analyses combine results, but they cannot fix bias in the studies they combine.
+(b) (2) only
+
+    **Incorrect:** (2) is false: biased studies produce a biased meta-analysis.
+(c) Both (1) and (2)
+
+    **Incorrect:** (2) is false.
+(d) Neither (1) nor (2)
+
+    **Incorrect:** (1) is true.
+
+**Question 36.** Which of the following are true about the *Literary Digest* poll, which surveyed 2.2 million people in 1936 and wrongly predicted that Landon would win? *Select all*
+
+(a) Its sample was biased toward wealthier Americans (for example, magazine subscribers), and a larger sample does not fix that kind of bias
+
+    **Correct:** Bias, unlike noise, does not shrink as the sample grows.
+(b) A sample can be huge and still produce an answer that is far from the truth
+
+    **Correct:** The poll had almost no noise but a lot of bias.
+(c) The poll was wrong because 2.2 million people is too small a sample
+
+    **Incorrect:** The sample was very large; the problem was who was in it.
+(d) A random sample of just 100 people would have been less accurate than the Digest's poll
+
+    **Incorrect:** A small random sample is noisy but unbiased; the Digest's poll was biased.
+
+**Question 37.** A pollster draws a random sample of 1,000 people from a voter file and calls each of them, but only 5\% pick up, and the people who pick up tend to be older than the people who do not. Which problem does this describe?
+
+(a) Non-response bias
+
+    **Correct:** The people who *respond* are systematically different from the people who were sampled.
+(b) Sample selection bias
+
+    **Incorrect:** The people were selected randomly. The problem comes from who responds.
+(c) Reverse causation
+
+    **Incorrect:** This is about describing a population, not about causal direction.
+(d) There is no bias, because the original sample was random
+
+    **Incorrect:** Random sampling does not protect against differences in who responds.
+
+**Question 38.** A mayor asks everyone who comes to a town hall meeting whether they support a new bus lane and concludes that residents oppose it. Which problem is the biggest threat to this conclusion?
+
+(a) Sample selection bias: people who choose to attend a town hall differ from residents overall
+
+    **Correct:** The sample was self-selected, not randomly drawn from the population.
+(b) Omitted variable bias in a regression
+
+    **Incorrect:** No regression is involved. The issue is who is in the sample.
+(c) Noise, because town halls are small
+
+    **Incorrect:** Even a large crowd would be biased in the same way.
+(d) Reverse causation: opposing the bus lane causes people to attend
+
+    **Incorrect:** Attendance is the issue, but the main problem is that attendees are not representative.
+
+**Question 39.** A survey sample is 75\% male and 25\% not male, while the population is 50\% male and 50\% not male. Relative to each male respondent, about how much should each non-male respondent count in a weighted analysis?
+
+(a) $1/3$ as much
+
+    **Incorrect:** That would count the under-represented group *less*, the opposite of what is needed.
+(b) The same amount
+
+    **Incorrect:** Equal weights would leave the sample unrepresentative.
+(c) 3 times as much
+
+    **Correct:** The population share divided by the sample share is $50/25 = 2$ for non-male respondents and $50/75 \approx 0.67$ for male respondents, a ratio of 3.
+(d) 25 times as much
+
+    **Incorrect:** Weights are ratios of population share to sample share, not the raw sample percentage.
+
+**Question 40.** Three survey respondents answered a yes/no question ($1$ = yes). Respondent 1 answered $1$ and has weight 1. Respondent 2 answered $0$ and has weight 1. Respondent 3 answered $0$ and has weight 2. What is the weighted mean?
+
+(a) 0.33
+
+    **Incorrect:** This is the unweighted mean ($1/3$).
+(b) 0.25
+
+    **Correct:** $(1 \times 1 + 0 \times 1 + 0 \times 2)/(1 + 1 + 2) = 1/4$.
+(c) 0.50
+
+    **Incorrect:** Weight each answer by its weight and divide by the total weight (4); this does not come out to 0.5.
+(d) 1.00
+
+    **Incorrect:** This is the largest answer given, not an average.
+
+**Question 41.** Which of the following are true?\
+(1) Weights count under-represented groups more so that the sample looks more like the population on the variables we weight on.\
+(2) After weighting, a sample is guaranteed to be representative on every variable, even ones that were not used for weighting.
+
+(a) (1) only
+
+    **Correct:** Weights help, but omitted variables that affect both responding and the outcome can still bias the answer.
+(b) (2) only
+
+    **Incorrect:** (2) is false: weights cannot guarantee representativeness.
+(c) Both (1) and (2)
+
+    **Incorrect:** (2) is false.
+(d) Neither (1) nor (2)
+
+    **Incorrect:** (1) is true.
+
+**Question 42.** Which of the following is the correct interpretation of the estimate in Figure 8?
+
+(a) In this sample, men were about 0.16 percentage points more likely than women to have voted in the 2004 primary
+
+    **Correct:** The estimate is $0.0016$ and the comparison is male minus female.
+(b) Men are 0.16\% more likely to vote than women in the US
+
+    **Incorrect:** The estimate is in percentage points and describes this sample of Michigan voters.
+(c) Women were 0.16 percentage points more likely to have voted in the 2004 primary
+
+    **Incorrect:** The sign is positive for `sexmale`, so men are higher.
+(d) Being male causes people to vote at higher rates
+
+    **Incorrect:** This is a descriptive comparison. Sex was not randomly assigned.
+
+**Question 43.** Which of the following are true about Figure 8? *Select all*
+
+(a) The difference is not statistically significant, because the p-value (about 0.37) is above 0.05
+
+    **Correct:** A p-value of 0.37 is not small enough to reject the null at the usual threshold.
+(b) The 95\% confidence interval (about $-0.19$ to $0.51$ percentage points) includes 0
+
+    **Correct:** A confidence interval that includes zero is consistent with no difference.
+(c) This shows that men and women voted at exactly the same rates in the population
+
+    **Incorrect:** Not significant is not the same as proving there is no difference.
+(d) The p-value means there is a 37\% chance that men and women do not differ
+
+    **Incorrect:** A p-value is not the probability that the null is true.
+
+**Question 44.** Which pair of commands correctly makes a scatterplot with `expendA` on the x-axis and `voteA` on the y-axis, and then runs a regression predicting `voteA` from `expendA`?
+
+(a) `qplot(expendA, voteA, data = vote1)` and `lm(voteA ~ expendA, data = vote1)`
+
+    **Correct:** `qplot` takes x then y, while `lm` takes the outcome (y) first: they are opposite.
+(b) `qplot(voteA, expendA, data = vote1)` and `lm(voteA ~ expendA, data = vote1)`
+
+    **Incorrect:** This puts `voteA` on the x-axis.
+(c) `qplot(expendA, voteA, data = vote1)` and `lm(expendA ~ voteA, data = vote1)`
+
+    **Incorrect:** This regression predicts `expendA` from `voteA`, the reverse of the question.
+(d) `qplot(voteA, expendA, data = vote1)` and `lm(expendA ~ voteA, data = vote1)`
+
+    **Incorrect:** Both commands have the variables reversed.
+
+**Question 45.** Which of the following is true about the line in Figure 9?
+
+(a) It is our best guess of `voteA` for each value of `expendA`
+
+    **Correct:** The line of best fit estimates the average of y at each value of x.
+(b) It connects the highest and lowest points in the data
+
+    **Incorrect:** The line is computed using every point, not just the extremes.
+(c) It shows that spending causes candidates to win more of the vote
+
+    **Incorrect:** A line of best fit describes a relationship; it does not show causation.
+(d) It shows the exact vote share for every candidate
+
+    **Incorrect:** Points sit well above and below the line, so it is only an average.
+
+**Question 46.** In Figure 9, a straight line is not a perfect summary of the pattern. Which of the following is a pattern in the points that the line does **not** capture?
+
+(a) Many candidates who spend little have low vote shares, many who spend a moderate amount have high vote shares, and the few candidates who spend over 1,000 have middling vote shares
+
+    **Correct:** Plotting the data reveals patterns that a single line hides. That is why we look at our data.
+(b) Every point falls exactly on the line
+
+    **Incorrect:** The points are widely scattered around the line.
+(c) Candidates who spend more always receive a lower vote share
+
+    **Incorrect:** The line slopes up, and the pattern is not that simple either.
+(d) The data contain only two possible values of `voteA`
+
+    **Incorrect:** `voteA` takes many values.
+
+**Question 47.** Because `expendA` is measured in thousands of dollars, a prediction for a candidate who spends \$5 million (`expendA = 5000`) would be unreliable. Why?
+
+(a) The highest spending in the data is about 1,470 thousand dollars, so this would be extrapolating far beyond the data
+
+    **Correct:** Do not extrapolate: the line has no data to support predictions that far outside the observed range.
+(b) Regression cannot make predictions for any value of `expendA`
+
+    **Incorrect:** Regression can predict values within the range of the data.
+(c) The predicted vote share would be negative
+
+    **Incorrect:** The line would predict about 161\%, an impossible vote share, because it is extrapolating.
+(d) The line of best fit changes whenever we ask for a new prediction
+
+    **Incorrect:** The line is fixed once we fit it.
+
+**Question 48.** Using Figure 10, which is the best interpretation of the coefficient on `expendA` (about 0.0236)?
+
+(a) Candidates who spent \$1,000 more received, on average, about 0.024 percentage points more of the vote in these data
+
+    **Correct:** The slope is the change in `voteA` for a one-unit increase in `expendA`, which is \$1,000 here.
+(b) Spending an additional \$1,000 *causes* about 0.024 percentage points more of the vote
+
+    **Incorrect:** A bivariate regression of observational data does not show causation.
+(c) Candidates who spent \$1 more received 0.0236 more percentage points of the vote
+
+    **Incorrect:** `expendA` is in thousands of dollars, so one unit is \$1,000.
+(d) The average candidate in these data received 0.0236\% of the vote
+
+    **Incorrect:** A coefficient is a slope, not an average vote share.
+
+**Question 49.** Using Figure 10, what vote share would the regression predict for a candidate who spent \$500,000 (`expendA = 500`)?
+
+(a) 43.2
+
+    **Incorrect:** This is the intercept, the prediction at `expendA = 0`.
+(b) 55.0
+
+    **Correct:** $43.171 + 0.0236 \times 500 \approx 55.0$.
+(c) 66.0
+
+    **Incorrect:** This would use a slope of about 0.046.
+(d) 11.8
+
+    **Incorrect:** This is only the slope times 500; the intercept must be added.
+
+**Question 50.** In Figure 10, how should we interpret the `(Intercept)` of about 43.2?
+
+(a) The regression's best guess of `voteA` for a candidate who spent \$0
+
+    **Correct:** The intercept is the value of the line when x equals 0.
+(b) The average amount spent by candidates
+
+    **Incorrect:** The intercept is a value of `voteA`, not a spending amount.
+(c) The effect of spending on vote share
+
+    **Incorrect:** That is the slope (the `expendA` coefficient).
+(d) The standard error of the estimate
+
+    **Incorrect:** The standard error is a separate column.
+
+**Question 51.** Which of the following are reasons why the relationship in Figure 10 may **not** be causal? *Select all*
+
+(a) Omitted variable bias: for example, the strength of a candidate's party in the district could affect both spending and vote share
+
+    **Correct:** A third variable could cause both.
+(b) Reverse causation: candidates who expect to do well may find it easier to raise money
+
+    **Correct:** The outcome could cause the spending.
+(c) The sample is too small to run a regression
+
+    **Incorrect:** 173 elections is plenty to fit a line; the problem is causal interpretation.
+(d) The relationship is statistically significant
+
+    **Incorrect:** Statistical significance does not itself cause bias or protect against it.
+
+**Question 52.** A researcher adds random noise to the outcome variable and re-runs a bivariate regression. Which of the following are true?\
+(1) The slope of the line of best fit will be about the same.\
+(2) The correlation between the variables will be about the same.
+
+(a) (1) only
+
+    **Correct:** Noise makes the outcome harder to predict, so correlation falls, but the average relationship (the slope) does not change.
+(b) (2) only
+
+    **Incorrect:** The correlation would fall.
+(c) Both (1) and (2)
+
+    **Incorrect:** The correlation would fall.
+(d) Neither (1) nor (2)
+
+    **Incorrect:** The slope is about the same.
+
+**Question 53.** In Figure 11, what is the best interpretation of the coefficient on `expendA` (about 0.0349)?
+
+(a) Among races where candidate B's spending and A's party strength are the same, candidates who spent \$1,000 more received about 0.035 percentage points more of the vote on average
+
+    **Correct:** Each coefficient is the relationship holding the other variables in the regression constant.
+(b) Spending \$1,000 more causes candidate A to receive 0.035 percentage points more of the vote
+
+    **Incorrect:** Multivariate regression with observational data does not guarantee a causal estimate.
+(c) Candidates who spent \$1,000 more received 0.035 percentage points more of the vote, regardless of the other variables
+
+    **Incorrect:** The coefficient holds the other variables constant; it is not 'regardless'.
+(d) It is the average of candidate A's spending
+
+    **Incorrect:** A coefficient is a slope, not an average of a variable.
+
+**Question 54.** The coefficient on `expendA` is about 0.0236 in Figure 10 but about 0.0349 in Figure 11. Which is the best explanation?
+
+(a) The bivariate regression left out variables (like the opponent's spending) that are related to both `expendA` and `voteA`, so the estimates differ once they are included
+
+    **Correct:** Adding variables changes a coefficient when the omitted variables are related to both the predictor and the outcome.
+(b) The second regression is just a different sample of the same elections
+
+    **Incorrect:** Both regressions use all 173 elections.
+(c) Adding more variables to a regression always gives the correct causal estimate
+
+    **Incorrect:** More variables can help but never guarantee that all omitted variable bias is gone.
+(d) The difference is only due to rounding
+
+    **Incorrect:** The difference is much larger than rounding.
+
+**Question 55.** Using Figure 11, what is the best interpretation of the coefficient on `expendB` (about $-0.0349$)?
+
+(a) Holding candidate A's spending and party strength constant, races where candidate B spent \$1,000 more had about 0.035 percentage points less of the vote for candidate A, on average
+
+    **Correct:** Opponent spending is associated with a lower vote share for A, and the p-value is far below 0.05.
+(b) Candidate B's spending has no statistically significant relationship with `voteA`
+
+    **Incorrect:** The p-value is below 2e-16, which is highly significant.
+(c) Candidate B spending \$1,000 more causes candidate A to lose exactly 0.035 percentage points
+
+    **Incorrect:** This claims an exact causal effect; the regression gives an estimate and is observational.
+(d) A's vote share goes up by 0.035 for every \$1,000 candidate B spends
+
+    **Incorrect:** The sign is negative.
+
+**Question 56.** Using Figure 11, what vote share would the regression predict for a candidate when both candidates spent \$300,000 (`expendA = 300` and `expendB = 300`) and `prtystrA = 50`?
+
+(a) About 50.4
+
+    **Correct:** $33.27 + 0.0349 \times 300 - 0.0349 \times 300 + 0.3425 \times 50 \approx 50.4$.
+(b) About 33.3
+
+    **Incorrect:** This is only the intercept.
+(c) About 60.9
+
+    **Incorrect:** This adds the effect of A's spending but forgets to subtract B's spending.
+(d) About 17.1
+
+    **Incorrect:** This is only the contribution of party strength ($0.3425 \times 50$).
+
+**Question 57.** Which of the following are true about multivariate regression with observational data?\
+(1) Controlling for additional variables can reduce omitted variable bias.\
+(2) Once we control for a few important variables, we can be sure that no omitted variable bias remains.
+
+(a) (1) only
+
+    **Correct:** Controls can help, but we can never be sure we have controlled for everything that matters.
+(b) (2) only
+
+    **Incorrect:** (2) is false: omitted variables we did not measure can still bias the estimate.
+(c) Both (1) and (2)
+
+    **Incorrect:** (2) is false.
+(d) Neither (1) nor (2)
+
+    **Incorrect:** (1) is true.
+
+**Question 58.** In Figure 12, which condition is the baseline (the omitted category) that all of the coefficients are compared to?
+
+(a) Control
+
+    **Incorrect:** `messagesControl` appears in the output, so Control is not the omitted category.
+(b) Civic Duty
+
+    **Correct:** It is the only condition without its own coefficient, and the `(Intercept)` is its average. (R uses the alphabetically first category by default.)
+(c) Hawthorne
+
+    **Incorrect:** `messagesHawthorne` appears in the output.
+(d) Neighbors
+
+    **Incorrect:** `messagesNeighbors` appears in the output.
+
+**Question 59.** What is the best interpretation of the `(Intercept)` of about 0.315 in Figure 12?
+
+(a) The average 2006 turnout in the baseline group (voters who received the Civic Duty mailer) was about 31.5\%
+
+    **Correct:** With no other variables, the intercept is the mean of the baseline group.
+(b) The average 2006 turnout in the Control group was about 31.5\%
+
+    **Incorrect:** The Control group's mean is the intercept plus the Control coefficient, about 29.7\%.
+(c) The effect of the Civic Duty mailer relative to no mailer was 31.5 percentage points
+
+    **Incorrect:** The intercept is a level, not an effect.
+(d) Overall turnout in the sample was 31.5\%
+
+    **Incorrect:** Overall turnout is a mix of all four groups.
+
+**Question 60.** Using Figure 12, what is the estimated effect of the Neighbors mailer relative to the *Control* group?
+
+(a) 0.063
+
+    **Incorrect:** This is the Neighbors mailer compared to the baseline, *Civic Duty*.
+(b) About 0.081
+
+    **Correct:** $0.0634 - (-0.0179) = 0.0813$, the difference between the Neighbors and Control coefficients.
+(c) About $-0.018$
+
+    **Incorrect:** This is the Control group compared to the Civic Duty baseline.
+(d) 0.315
+
+    **Incorrect:** This is the baseline group's average turnout.
+
+**Question 61.** Using the estimate and standard error for `messagesHawthorne` in Figure 12 (estimate 0.0078, standard error 0.0033), what is the 95\% confidence interval, rounded to three decimals?
+
+(a) $0.001$ to $0.014$
+
+    **Correct:** $0.0078 \pm 1.96 \times 0.0033 \approx 0.0078 \pm 0.0065$. (Regression output does not report the confidence interval, so we compute it.)
+(b) $0.005$ to $0.011$
+
+    **Incorrect:** This uses $\pm 1$ standard error.
+(c) $0.000$ to $0.008$
+
+    **Incorrect:** The interval must be centered on the estimate.
+(d) $-0.013$ to $0.029$
+
+    **Incorrect:** This uses far too many standard errors.
+
+**Question 62.** How many separate regressions are reported in Figure 13?
+
+(a) 1
+
+    **Incorrect:** Each column is its own regression.
+(b) 2
+
+    **Incorrect:** There are three columns.
+(c) 3
+
+    **Correct:** Each column, (1) to (3), is a regression.
+(d) 4
+
+    **Incorrect:** There are four rows of coefficients, but each column is a regression.
+
+**Question 63.** Which of the following is true about the blank cells in the `expendB` row of Figure 13?
+
+(a) `expendB` was not included in regressions (1) and (2)
+
+    **Correct:** A blank cell means the variable was not in that regression.
+(b) `expendB` had a coefficient of exactly zero in regressions (1) and (2)
+
+    **Incorrect:** A blank cell means the variable was excluded, not that its coefficient was 0.
+(c) `expendB` was not statistically significant in regressions (1) and (2)
+
+    **Incorrect:** It was not part of those regressions at all.
+(d) There is an error in the table
+
+    **Incorrect:** Blank cells are normal in regression tables.
+
+**Question 64.** In column (3) of Figure 13, the `expendA` row reads `0.035***` with `(0.003)` below it. Which of the following are true? *Select all*
+
+(a) The number in parentheses is the standard error
+
+    **Correct:** Tables typically report the standard error beneath each coefficient.
+(b) The coefficient is statistically significant at the 0.01 level (the t-statistic is roughly 0.035/0.003, which is much bigger than 1.96)
+
+    **Correct:** Three stars mean $p < 0.01$ according to the table note.
+(c) The number in parentheses is the p-value
+
+    **Incorrect:** It is the standard error. Stars show significance.
+(d) 0.003 is the average amount candidate A spent
+
+    **Incorrect:** It is the standard error of the coefficient.
+
+**Question 65.** What does 173 next to "Observations" mean in Figure 13?
+
+(a) The regressions use 173 House elections, one row of data per election
+
+    **Correct:** N is the number of rows (observations) in the data.
+(b) 173 candidates spent more than average
+
+    **Incorrect:** N is the sample size, not a count of high spenders.
+(c) The coefficient on `expendA` is 173
+
+    **Incorrect:** The coefficient is 0.024 to 0.035.
+(d) 173 variables are included in each regression
+
+    **Incorrect:** Each regression has between 1 and 3 predictors.
+
+**Question 66.** What is the difference between column (1) and column (2) in Figure 13, and what happens to the `expendA` coefficient?
+
+(a) Column (2) adds `prtystrA` as a control variable; the coefficient on `expendA` falls from 0.024 to 0.020
+
+    **Correct:** The columns use the same outcome and sample. Only the controls differ.
+(b) Column (2) uses a different outcome variable; the coefficient on `expendA` stays the same
+
+    **Incorrect:** Both columns have `voteA` as the outcome, and the coefficient changes.
+(c) Column (2) drops `expendA`; the coefficient falls to zero
+
+    **Incorrect:** `expendA` is still in column (2).
+(d) Column (2) uses a different set of elections; the coefficient on `expendA` rises
+
+    **Incorrect:** N is 173 in both columns, and the coefficient falls.
+
+**Question 67.** Which of the following are true?\
+(1) The $R^2$ in column (3) of Figure 13 (0.569) is higher than in column (1) (0.156), so the variables in column (3) explain more of the variation in `voteA`.\
+(2) A higher $R^2$ shows that the variables in the regression cause the outcome.
+
+(a) (1) only
+
+    **Correct:** $R^2$ measures how much variation the predictors explain, not causation.
+(b) (2) only
+
+    **Incorrect:** (2) is false: $R^2$ says nothing about causation.
+(c) Both (1) and (2)
+
+    **Incorrect:** (2) is false.
+(d) Neither (1) nor (2)
+
+    **Incorrect:** (1) is true.
+
+**Question 68.** Which coefficients in column (2) of Figure 14 can be interpreted as causal effects?
+
+(a) The `messages` coefficients, because the mailers were randomly assigned
+
+    **Correct:** Only randomized variables have a causal interpretation; the others are correlations.
+(b) All of the coefficients, because the data come from an experiment
+
+    **Incorrect:** Variables like sex and year of birth were not randomly assigned.
+(c) Only `primary2004`, since it has the largest coefficient
+
+    **Incorrect:** The size of a coefficient does not make it causal, and `primary2004` was not randomized.
+(d) None of them, since regressions can never show causal effects
+
+    **Incorrect:** A regression of experimental data can show causal effects of the randomized variables.
+
+**Question 69.** Why might researchers report column (2) of Figure 14, which adds control variables to the experiment?\
+(1) Including control variables can increase the precision of the treatment effect estimates.\
+(2) Including control variables is necessary for the estimates to be unbiased, because otherwise the treatment and control groups might differ.
+
+(a) (1) only
+
+    **Correct:** In experiments, controls reduce noise, not bias. Randomization already removed bias.
+(b) (2) only
+
+    **Incorrect:** Randomization already removes bias, so controls are not necessary for that.
+(c) Both (1) and (2)
+
+    **Incorrect:** (2) is false for experiments.
+(d) Neither (1) nor (2)
+
+    **Incorrect:** (1) is true: controls can reduce noise.
+
+**Question 70.** In column (2) of Figure 14, the coefficient on `yearofbirth` is $-0.004$. Which is the best interpretation?
+
+(a) Among voters with the same mailer, sex, 2004 voting history, and household size, voters born one year later were about 0.4 percentage points less likely to vote in 2006 on average
+
+    **Correct:** This is a correlation (younger voters vote less) holding the other variables constant.
+(b) Being born one year later causes a voter to be 0.4 percentage points less likely to vote
+
+    **Incorrect:** Birth year was not randomly assigned, so this is not a causal effect.
+(c) Voters were randomly assigned a birth year
+
+    **Incorrect:** Birth year is a pre-existing characteristic.
+(d) Voters born later were 0.004 percentage points less likely to vote
+
+    **Incorrect:** The coefficient is 0.004 as a proportion, which is 0.4 percentage points.
+
+**Question 71.** Using the `messagesNeighbors` row of column (1) of Figure 14 (0.063 with a standard error of 0.003), what is the approximate 95\% confidence interval?
+
+(a) About 0.057 to 0.069
+
+    **Correct:** $0.063 \pm 1.96 \times 0.003 \approx 0.063 \pm 0.006$.
+(b) About 0.060 to 0.066
+
+    **Incorrect:** This uses $\pm 1$ standard error.
+(c) About 0.063 to 0.069
+
+    **Incorrect:** The interval extends below the estimate as well as above.
+(d) About 0.000 to 0.126
+
+    **Incorrect:** This uses $\pm 21$ standard errors.
+
+**Question 72.** In this design, which is the **instrument**, the **treatment variable**, and the **outcome**?
+
+(a) Instrument: draft lottery number\
+    Treatment: military service\
+    Outcome: later earnings
+
+    **Correct:** The lottery is random and affects service, and service is what we actually care about the effect of.
+(b) Instrument: military service\
+    Treatment: draft lottery number\
+    Outcome: later earnings
+
+    **Incorrect:** The instrument and treatment are reversed.
+(c) Instrument: later earnings\
+    Treatment: military service\
+    Outcome: draft lottery number
+
+    **Incorrect:** Earnings is the outcome.
+(d) Instrument: military service\
+    Treatment: later earnings\
+    Outcome: draft lottery number
+
+    **Incorrect:** Everything is reversed.
+
+**Question 73.** Which of the following would be a violation of the **exclusion restriction** in this study? *Select all*
+
+(a) Men with low lottery numbers were more likely to enroll in college to get a deferment, and college raises earnings
+
+    **Correct:** Then the lottery affects earnings through college, not only through military service.
+(b) Men with low lottery numbers were more likely to move to Canada, which affects their earnings
+
+    **Correct:** This is another path from the lottery to earnings that bypasses service.
+(c) Men with low lottery numbers were more likely to be drafted into military service
+
+    **Incorrect:** This is the first stage (instrument affects treatment), which is required, not a violation.
+(d) Lottery numbers were randomly assigned by birthday
+
+    **Incorrect:** Random assignment is a separate requirement for a good instrument.
+
+**Question 74.** In an instrumental variables study, what does the **first stage** tell us?
+
+(a) How strongly the instrument changes the treatment variable (for example, how much winning a school lottery raises the years a student spends at the school)
+
+    **Correct:** If the instrument barely moves the treatment, the design is weak.
+(b) Whether the treatment variable changes the outcome
+
+    **Incorrect:** That is the second step: the effect of the treatment on the outcome.
+(c) Whether the exclusion restriction is true
+
+    **Incorrect:** The first stage does not test the exclusion restriction.
+(d) Whether the instrument is randomly assigned
+
+    **Incorrect:** The first stage is an estimate of how the instrument affects treatment, not a test of randomization.
+
+**Question 75.** "In order to determine whether $X$ causes $Y$, you must understand what causes $X$." Which question does this advice tell us to ask?
+
+(a) Who am I comparing to whom, and how did they get the values of $X$ that they did?
+
+    **Correct:** A natural experiment is credible when we believe the variation in $X$ is random.
+(b) What are all of the other variables that cause $Y$?
+
+    **Incorrect:** We do not need to know everything that causes $Y$.
+(c) How large is the sample?
+
+    **Incorrect:** Sample size affects noise, not the key assumption.
+(d) How many control variables did the study include?
+
+    **Incorrect:** Control variables do not tell us how units got their treatment.
+
+**Question 76.** Which statement about instrumental variables estimates compared to ordinary regression estimates is most accurate?
+
+(a) IV estimates usually rely on weaker assumptions than regression on observational data, but they usually have larger standard errors
+
+    **Correct:** In the VC example, IV standard errors were much larger than OLS standard errors.
+(b) IV estimates always have smaller standard errors than regression estimates
+
+    **Incorrect:** IV estimates are usually noisier.
+(c) IV estimates are as credible as a randomized experiment in every case
+
+    **Incorrect:** The exclusion restriction can fail, so IV estimates are less credible than a real experiment.
+(d) IV estimates do not require any assumptions
+
+    **Incorrect:** They require random assignment of the instrument and the exclusion restriction.
+
+**Question 77.** In the regression discontinuity design behind Figure 15, what is the running variable, the cutoff, and the treatment?
+
+(a) Running variable: `margin`\
+    Cutoff: 0\
+    Treatment: the Democrat winning the election (`dem_won`)
+
+    **Correct:** Winning is determined by whether the margin is above or below 0.
+(b) Running variable: `vote`\
+    Cutoff: 50\
+    Treatment: `margin`
+
+    **Incorrect:** `vote` is the outcome.
+(c) Running variable: `dem_won`\
+    Cutoff: 0\
+    Treatment: `vote`
+
+    **Incorrect:** `dem_won` is the treatment and `vote` is the outcome.
+(d) Running variable: `margin`\
+    Cutoff: 0\
+    Treatment: `vote`
+
+    **Incorrect:** `vote` is the outcome, not the treatment.
+
+**Question 78.** Why do regression discontinuity studies compare candidates who *narrowly* won to candidates who *narrowly* lost, instead of comparing all winners to all losers?
+
+(a) Races decided by a tiny margin are essentially a coin flip, so narrow winners and narrow losers are similar except for who won, while landslide winners differ in many ways
+
+    **Correct:** Close to the cutoff, the treatment is as good as randomly assigned.
+(b) Narrow races have more voters, which makes the estimate more precise
+
+    **Incorrect:** Narrow races give *fewer* observations.
+(c) Landslide races are not included in the data
+
+    **Incorrect:** They are in the data, but they are not good comparison groups.
+(d) Narrow winners always have the same vote share as narrow losers
+
+    **Incorrect:** If so, there would be no effect to estimate.
+
+**Question 79.** Figure 16 estimates the effect among races decided by less than 2 percentage points. Which is the best interpretation of the estimate (about 10.2)?
+
+(a) Among close races, Democratic candidates who narrowly won received about 10 percentage points more of the vote in the next election than Democratic candidates who narrowly lost
+
+    **Correct:** `condition1 = 0` is the baseline, so the estimate is narrow winners minus narrow losers.
+(b) Democratic candidates who won by any margin received 10.2 more percentage points in the next election
+
+    **Incorrect:** The estimate only uses close races, so it does not cover all winners.
+(c) The Democratic candidates who narrowly lost received 10.2 more percentage points
+
+    **Incorrect:** The sign is positive, and `condition2` (winning) is higher.
+(d) Winning an election increases the vote share in the next election by 10.2\% in every race, including landslides
+
+    **Incorrect:** The design only estimates the effect near the cutoff.
+
+**Question 80.** Which of the following would threaten the validity of this regression discontinuity design? *Select all*
+
+(a) A party could influence the vote count when a race is very close, so that narrow winners are not like narrow losers
+
+    **Correct:** This is sorting around the cutoff.
+(b) Candidates could precisely control their final vote margin to land just above 0
+
+    **Correct:** If units can sort themselves across the cutoff, the two sides are not comparable.
+(c) Races with large margins have different vote shares in the next election than close races
+
+    **Incorrect:** RDD only compares races near the cutoff. Differences far from it do not matter.
+(d) More Democrats won than lost in the data (750 versus 640 races)
+
+    **Incorrect:** Having more winners overall does not threaten the comparison at the cutoff.
+
+**Question 81.** Which of the following are checks of an RDD's validity? *Select all*
+
+(a) Checking that other variables (such as the previous election's vote share) look similar just above and just below the cutoff
+
+    **Correct:** If they differ, the two sides may not be comparable.
+(b) Checking that there is no unusual bunching of observations on one side of the cutoff
+
+    **Correct:** Bunching suggests that units sort across the threshold.
+(c) Checking that the effect is the same for races decided by 1 point and by 50 points
+
+    **Incorrect:** The design estimates the effect near the cutoff only.
+(d) Making the sample bigger by including every race, whatever its margin
+
+    **Incorrect:** Far-away races make the comparison worse, not better.
+
+**Question 82.** A researcher re-runs Figure 16 using a much *narrower* window (races decided by less than 0.5 points instead of less than 2). What is the most likely consequence?
+
+(a) The races compared are more similar, but there are fewer of them, so the standard error will probably be larger
+
+    **Correct:** There is a tradeoff between comparability and sample size.
+(b) The standard error will get smaller, because narrow races are more precise
+
+    **Incorrect:** Fewer observations usually mean a larger standard error.
+(c) The estimate must be exactly the same
+
+    **Incorrect:** The estimate generally changes when the sample changes.
+(d) The estimate becomes causal only with the narrower window
+
+    **Incorrect:** The design is as-if random near the cutoff; a narrower window does not create causality.
+
+**Question 83.** Which of the following is the main limitation on **generalizing** from this study?
+
+(a) The estimate applies to close elections near the cutoff, which may differ from other elections
+
+    **Correct:** RDD estimates the effect for units near the cutoff.
+(b) The estimate applies only to the largest landslide races
+
+    **Incorrect:** It applies to the closest races.
+(c) The estimate cannot be generalized to any Senate race
+
+    **Incorrect:** It is informative for close races, just not necessarily for all.
+(d) Randomization was not used, so there is no limitation
+
+    **Incorrect:** A natural experiment still has limits on external validity.
+
+**Question 84.** In this study, which group is the treated group and which is the comparison (control) group?
+
+(a) New Jersey restaurants are treated; Pennsylvania restaurants are the comparison group
+
+    **Correct:** New Jersey is the state whose minimum wage changed.
+(b) Pennsylvania restaurants are treated; New Jersey restaurants are the comparison group
+
+    **Incorrect:** Pennsylvania did not change its minimum wage.
+(c) Restaurants measured before the increase are treated; restaurants measured after are the comparison group
+
+    **Incorrect:** Before and after are time periods, not treatment groups.
+(d) There is no comparison group in a difference-in-differences design
+
+    **Incorrect:** Every difference-in-differences design needs a comparison group.
+
+**Question 85.** Using Figure 17, what was the change in the average number of full-time employees per restaurant in New Jersey, and in Pennsylvania?
+
+(a) New Jersey: about +0.43; Pennsylvania: about $-2.49$
+
+    **Correct:** NJ: $8.405 - 7.971 \approx +0.43$. PA: $8.172 - 10.664 \approx -2.49$.
+(b) New Jersey: about $-2.49$; Pennsylvania: about +0.43
+
+    **Incorrect:** The states are swapped.
+(c) New Jersey: about 8.41; Pennsylvania: about 8.17
+
+    **Incorrect:** These are the *after* averages, not the changes.
+(d) New Jersey: about +2.93; Pennsylvania: about 0
+
+    **Incorrect:** 2.93 is the difference between the two changes, and Pennsylvania's change was not 0.
+
+**Question 86.** Using Figure 17, what is the difference-in-differences estimate of the effect of the New Jersey minimum wage increase on full-time employment?
+
+(a) +0.43
+
+    **Incorrect:** This is only the change in New Jersey. It ignores what happened in Pennsylvania.
+(b) $-2.49$
+
+    **Incorrect:** This is only the change in Pennsylvania.
+(c) +2.93
+
+    **Correct:** $(8.405 - 7.971) - (8.172 - 10.664) = 0.43 - (-2.49) \approx 2.93$.
+(d) +0.23
+
+    **Incorrect:** This is the difference between the two states' *after* averages ($8.41 - 8.17$). It ignores that the states started in different places.
+
+**Question 87.** Why not simply compare New Jersey and Pennsylvania restaurants *after* the increase, or look only at New Jersey before and after? *Select all*
+
+(a) Pennsylvania restaurants already had more full-time employees than New Jersey restaurants *before* the increase (about 10.7 versus 8.0), so an after-only comparison is affected by pre-existing differences
+
+    **Correct:** Pre-existing differences cause omitted variable bias.
+(b) Employment changed in Pennsylvania too (it fell), so looking only at New Jersey over time would blame the minimum wage for changes that happened anyway
+
+    **Correct:** Other things change over time.
+(c) Difference-in-differences requires that restaurants be randomly assigned to states
+
+    **Incorrect:** No randomization is needed; the key assumption is parallel trends.
+(d) A difference-in-differences design eliminates all bias, so the other comparisons are unnecessary
+
+    **Incorrect:** It relies on the parallel trends assumption, which can be violated.
+
+**Question 88.** What does the **parallel trends** assumption mean in this study?
+
+(a) If New Jersey had not raised its minimum wage, full-time employment would have changed by about the same amount in New Jersey as it did in Pennsylvania
+
+    **Correct:** Without treatment, the gap between the two states would have stayed the same.
+(b) New Jersey and Pennsylvania had the same number of full-time employees before the increase
+
+    **Incorrect:** The groups can differ in levels; the assumption is about changes.
+(c) Employment stayed constant in both states
+
+    **Incorrect:** The assumption is about equal changes, not no changes.
+(d) The minimum wage increase had no effect on employment
+
+    **Incorrect:** That is a possible finding, not the assumption.
+
+**Question 89.** Which of the following would be a violation of the parallel trends assumption? *Select all*
+
+(a) A recession hit New Jersey's fast-food industry much harder than Pennsylvania's during 1992
+
+    **Correct:** New Jersey's employment would have fallen more even without the minimum wage change.
+(b) Fast-food employment was already growing faster in New Jersey than in Pennsylvania in the years before 1992
+
+    **Correct:** Different pre-existing trends mean the groups would not have changed in parallel.
+(c) Pennsylvania had more full-time employees than New Jersey before the increase
+
+    **Incorrect:** Differences in levels are fine; only differences in trends matter.
+(d) Both states had their employment affected by the same national economic trend
+
+    **Incorrect:** A common trend affects both states equally, which is what the design differences out.
+
+**Question 90.** Which of the following are true about Figure 18? *Select all*
+
+(a) The estimate (about 2.9) matches the difference-in-differences calculation from the table of averages, because the outcome is each restaurant's *change* in full-time employees
+
+    **Correct:** Comparing the average changes is the difference in differences.
+(b) The estimate is not statistically significant at the 0.05 level, because the p-value (about 0.09) is above 0.05 and the confidence interval includes 0
+
+    **Correct:** The interval runs from about $-0.5$ to $6.4$.
+(c) The 95\% confidence interval shows that the minimum wage increase definitely did not reduce employment
+
+    **Incorrect:** The interval includes slightly negative values; it cannot rule out a small decrease.
+(d) The p-value of 0.09 means there is a 9\% chance that the minimum wage increase had no effect
+
+    **Incorrect:** A p-value is not the probability that the null is true.
+
+**Question 91.** Which of the following is an example of a **placebo test** for a difference-in-differences design? *Select all*
+
+(a) Checking whether employment in the two states was already moving in a similar way in several periods *before* the minimum wage increase
+
+    **Correct:** Similar pre-trends support (but do not prove) parallel trends.
+(b) Checking for an "effect" of the New Jersey minimum wage increase on an outcome it should not affect, and hoping to find none
+
+    **Correct:** Finding no effect on outcomes that should not change builds confidence in the design.
+(c) Checking whether the estimate gets larger when the sample gets larger
+
+    **Incorrect:** This does not test parallel trends.
+(d) Checking whether restaurants in both states were randomly assigned to their state
+
+    **Incorrect:** Restaurants are not randomly assigned to states; that is not what the placebo tests check.
+
+**Question 92.** Why can't researchers use a difference-in-differences design in every study?
+
+(a) They need data from multiple time periods, including before the treatment, and a treatment that changes over time
+
+    **Correct:** Without pre-treatment data or a changing treatment, there is nothing to difference.
+(b) The method only works with experimental data
+
+    **Incorrect:** Difference-in-differences is typically used with observational data.
+(c) The method requires a sample of at least a million observations
+
+    **Incorrect:** There is no such requirement.
+(d) It cannot be used with outcomes that are numbers
+
+    **Incorrect:** It works with numeric outcomes (and many others).
+
+**Question 93.** Which of the following are true about this game? *Select all*
+
+(a) Whatever Q does, P gets a better payoff by confessing
+
+    **Correct:** If Q confesses, $-4 > -8$. If Q does not confess, $-1 > -2$.
+(b) The outcome that is best for the two prisoners as a group (neither confesses) is not what individually rational prisoners choose
+
+    **Correct:** This is the collective action problem: what is best for the group is not best for each individual.
+(c) If both prisoners act rationally, they will both choose not to confess
+
+    **Incorrect:** Each is better off confessing, so rational prisoners both confess and get $-4, -4$.
+(d) The game shows that people are irrational
+
+    **Incorrect:** The game assumes rational people and still produces a bad outcome.
+
+**Question 94.** Six people each receive \$5 and can contribute any amount to a public pot. The pot is doubled and divided evenly among all six. Three people contribute their full \$5 and three contribute nothing. How much money does a person who contributed \$5 end up with, and how much does a person who contributed nothing end up with?
+
+(a) The contributors end with \$5 and the non-contributors end with \$10
+
+    **Correct:** The pot is $15$, doubled to $30$, so each person gets $5$ from the pot. Contributors keep $0 + 5 = 5$. Non-contributors keep $5 + 5 = 10$.
+(b) The contributors end with \$10 and the non-contributors end with \$5
+
+    **Incorrect:** Contributors gave away their \$5, so they cannot be better off than non-contributors.
+(c) Everyone ends with \$10
+
+    **Incorrect:** That would only happen if all six contributed everything.
+(d) The contributors end with \$15 and the non-contributors end with \$0
+
+    **Incorrect:** Money from the pot is split evenly, including with non-contributors.
+
+**Question 95.** Willer (2009) proposes that people contribute to collective action even though it is not in their short-term material interest because groups reward contributors with higher social status. Which of the following are true?\
+(1) This theory is consistent with rational choice theory (people make the best choice for them given the information available).\
+(2) Under this theory, the contributions are not in the contributor's self-interest at all.
+
+(a) (1) only
+
+    **Correct:** People may contribute because the status they gain is worth more to them than what they give up.
+(b) (2) only
+
+    **Incorrect:** The theory says contributing can be in people's self-interest because of the status benefits.
+(c) Both (1) and (2)
+
+    **Incorrect:** (2) is false.
+(d) Neither (1) nor (2)
+
+    **Incorrect:** (1) is true.
+
+**Question 96.** A researcher theorizes that people who know others can see whether they vote are more likely to vote, then mails voters letters that reveal their voting records to neighbors and compares their turnout to a control group. Which of the following correctly labels the parts of the scientific process?
+
+(a) Theory: people care about what others think of whether they vote\
+    Hypothesis: people sent letters revealing their voting records to neighbors will vote more often\
+    Empirical test: the randomized mailer experiment
+
+    **Correct:** A theory explains why, a hypothesis is a testable prediction, and the empirical test uses data to check it.
+(b) Theory: the randomized mailer experiment\
+    Hypothesis: people care about what others think\
+    Empirical test: voting records will be revealed
+
+    **Incorrect:** The experiment is the empirical test, not the theory.
+(c) Theory: people sent letters will vote more often\
+    Hypothesis: people care about what others think\
+    Empirical test: the randomized mailer experiment
+
+    **Incorrect:** The theory and hypothesis are swapped.
+(d) Theory: the randomized mailer experiment\
+    Hypothesis: the randomized mailer experiment\
+    Empirical test: people care about what others think
+
+    **Incorrect:** These labels are all mixed up.
+
+)--")
+```
