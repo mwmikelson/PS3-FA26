@@ -42,45 +42,11 @@ qr_image <- "attendance-qr.png"
 
 ## Agenda
 
-1. Final Projects
-2. Generalizability and Weighting
-3. Descriptive Hypothesis Testing
+1. Generalizability and Weighting
+2. Descriptive Hypothesis Testing
 
-## Housekeeping
-
-- Congrats on finishing the midterm!
-- Data collection or surveys are due **tonight**: *October 23rd, 11:59 pm*
     
-## Final Projects -- Choosing a Project
 
-- Which proposal is the most feasible?
-- What's the most interesting to the most members?
-- General notes to consider once you've chosen a project:
-    - Make sure you have a "Prefer not to answer" or similar option for sensitive questions
-         - Examples of sensitive topics can include, but are not limited to sexual orientation and GPA
-    - Consider adding additional variables for HTEs or descriptive hypothesis tests
-
-## Final Projects -- Data Collection
-
-- **Non-survey-based**
-    - Upload as a CSV or Excel file
-    - Extensions allowed, but make sure you have a plan to collect data
-- **Survey-based**
-    - Instructions on how to make a Google Form are on the "Data Collection" assignment on bCourses, including how to randomize treatment/control
-    - I will have comments to your groups on the surveys by October 26th, please make the changes by **Thursday, October 29th**
-    - I will have my sections complete the surveys from the other section on October 30th and November 2nd so that you have the data with plenty of time to submit the first draft of the report by **November 13th**
-- You're welcome to work on this during office hours
-
-```{r attendance, results='asis', echo=FALSE}
-if (params$show_answers) {
-  cat(paste0("
-## Attendance Survey
-\\begin{center}
-\\includegraphics[width=0.7\\textwidth]{", qr_image, "}
-\\end{center}
-"))
-}
-```
 
 ## From Samples to Populations
 
@@ -122,6 +88,18 @@ knitr::kable(tab, format = "latex", booktabs = TRUE, escape = FALSE,
 
 \small Weighted grade = weight $\times$ grade, summed across categories.
 
+
+```{r attendance, results='asis', echo=FALSE}
+if (params$show_answers) {
+  cat(paste0("
+## Attendance Survey
+\\begin{center}
+\\includegraphics[width=0.7\\textwidth]{", qr_image, "}
+\\end{center}
+"))
+}
+```
+
 ## Generalizing From Populations
 
 - We take samples from a population because we want to learn something about that population
@@ -150,33 +128,6 @@ knitr::kable(tab, format = "latex", booktabs = TRUE, escape = FALSE,
     - We can weight groups that are overrepresented in our sample *less* to provide better balance in our data
     - Ex: if college-educated voters are overrepresented in our sample, they get a smaller weight; if non-college-educated voters are underrepresented in our sample, they get a bigger weight
 - Adding weights to our descriptive hypothesis tests can help us take into account sampling bias when comparing two groups
-
-
-## Heterogeneous Treatment Effects
-
-- "Heterogeneous" = different
-    - vs the word "homogeneous" = same
-- The general idea:
-    - A treatment could have different effects on different groups in terms of magnitude (size of effect)
-
-\vspace{1em}
-\small
-
-| Group | Love for Oski before seeing photo | Love for Oski after seeing photo | Difference (after - before) |
-|:--|:-:|:-:|:-:|
-| Berkeley students | 75% | 100% | +25% |
-| Stanford students | 70% | 80% | +10% |
-
-## Heterogeneous Treatment Effects: Interpretation and Limitations
-- Calculating an average treatment effect within a subset/group tells you the average treatment effect within that group
-    - i.e. how seeing the picture vs. not seeing the picture affects Berkeley students
-\pause
-- Why can't we say being a Berkeley student instead of a Stanford student causes someone to be more pro-Oski?
-    - We don't randomly assign Berkeley vs. Stanford
-    - Remember: Causal statements pertain to what we can randomize
-    - We can randomize the treatment, but not the characteristics that we choose to base our subsets on
-\pause
-- HTEs just tell us how the treatment effect varies within groups -- they don't suggest that group characteristics cause anything in our outcome
 
 
 ## Acknowledgements
