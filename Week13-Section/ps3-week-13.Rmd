@@ -1,6 +1,6 @@
 ---
 title: "PS 3: Week 13"
-subtitle: "Multiple Linear Regression and Experiments; Natural Experiments"
+subtitle: "Multiple Linear Regression and Experiments"
 author: "Maya Mikelson"
 output:
   beamer_presentation:
@@ -35,30 +35,14 @@ header-includes:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE)
+qr_image <- "images/qr-code-2.png"
 ```
 
-## Attendance Survey
-
-
-## PS 3: Week 12
-
-\vspace{1.2cm}
-\begin{center}
-\Large Multiple Linear Regression and Experiments
-\end{center}
-
-## Agenda
-
-1. Attendance Survey
-2. MLR: Experiments
-3. MLR: Experiments: Worksheet
-4. Interpreting Regression Tables
-5. Regression Table Example: Observational
 
 ## Reading a Regression Table
 
-- Each column reports the results of one regression. Multiple columns means we are looking at the results of multiple different regressions (in this example, two). The column titles should tell you what is different about the regressions.
-    - Sometimes this will be switching subsets of data (as in this example).
+- Each column reports the results of one regression. Multiple columns means we are looking at the results of multiple different regressions. The column titles should tell you what is different about the regressions.
+    - Sometimes this will be switching subsets of data.
     - Sometimes it will involve switching outcomes. 
     - Sometimes the outcome and subset will be the same, but new variables will be introduced into the regression.
     - You have to use context and the table notes to be sure what is changing across the columns.
@@ -73,6 +57,17 @@ knitr::opts_chunk$set(echo = FALSE)
 - Missing cells mean that this variable was not included in this regression. Sometimes it will just be blank, sometimes there will be a "-" to indicate it is being left blank on purpose.
 - The sample size and R squared are printed at the bottom of each column.
 - $R^2$ or R squared is the proportion of the variation in the dependent variable that is predictable from the independent variable(s).
+
+```{r attendance, results='asis', echo=FALSE}
+if (params$show_answers) {
+  cat(paste0("
+## Attendance Survey
+\\begin{center}
+\\includegraphics[width=0.7\\textwidth]{", qr_image, "}
+\\end{center}
+"))
+}
+```
 
 ## Steps for Interpretation!
 
@@ -97,7 +92,6 @@ knitr::opts_chunk$set(echo = FALSE)
 ## Jupyter Notebook Exercise
 
 - On Canvas under Week 13
-- It is intentionally long because I wanted to provide extra practice you can return to before the final exam
 
 ## Acknowledgements
 
