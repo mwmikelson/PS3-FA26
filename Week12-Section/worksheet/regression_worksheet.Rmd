@@ -1,0 +1,373 @@
+---
+title: "`r if (params$key) 'Interpreting regression worksheet (answer key)' else 'Interpreting regression worksheet'`"
+author: Anne Marie Green
+date: "`r sub(' 0', ' ', format(Sys.Date(), '%B %d, %Y'))`"
+params:
+  key: false
+output:
+  pdf_document:
+    latex_engine: xelatex
+mainfont: EB Garamond
+monofont: Menlo
+monofontoptions: Scale=0.85
+fontsize: 12pt
+geometry: margin=1in
+header-includes:
+  - \pagenumbering{gobble}
+  - \usepackage{titling}
+  - \setlength{\droptitle}{-4em}
+  - \usepackage{xcolor}
+  - \definecolor{answergreen}{RGB}{0,128,0}
+  - \newenvironment{answer}{\color{answergreen}}{}
+  - \newcommand{\gap}[1]{\vspace{#1}}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, comment = NA, size = "small")
+options(width = 90)
+
+data <- read.csv("ps3_phonecall_clean.csv")
+
+# femprop in percent (0 to 100) and in 10s (0 to 10)
+data$femprop_pct <- round(data$femprop * 100)
+data$femprop_10 <- round(data$femprop * 10)
+```
+
+```{asis, echo = params$key}
+\renewcommand{\gap}[1]{\vspace{0.1cm}}
+```
+
+# Question 1
+
+Recall the experiment from Week 11: a woman talked on the phone at a German train station and then dropped a bag of lemons, and the researchers recorded whether any bystander helped her pick up the lemons. `treat` is which confederate^[A "confederate" is what social scientists call someone who is part of the research team but who either takes part in the experiment or pretends to be a real participant.] dropped the lemons, and `German` (a native German) is the control group.
+
+**a)** Fill in the blanks: A regression coefficient tells us that a `\rule{2.5cm}{0.4pt}`{=latex} unit increase in the predictor is associated with the `\rule{2.5cm}{0.4pt}`{=latex} change in the outcome, in the units of the outcome.
+
+```{asis, echo = params$key}
+::: {.answer data-latex=""}
+one; coefficient (estimate)
+:::
+```
+
+```{r q1-reg}
+summary(lm(anyhelp ~ treat, data = data))
+```
+
+\newpage
+
+**b)** The outcome of this study is `anyhelp` = whether or not the person received any help. 0 for no help, and 1 for any help.
+
+> **How to interpret proportion outcomes:** Because `anyhelp` is only ever 0 or 1, its average is the share of interactions in which the person got help. For example, if the person got help in 3 out of 4 interactions, the average of `anyhelp` is (1 + 1 + 1 + 0) / 4 = 0.75, or 75%. So the intercept is a proportion, and the other estimates are differences in proportions. Multiply them by 100 to read them as percentage points: an estimate of 0.05 means a 5 percentage point higher chance of getting help.
+
+**If the person got help in 2 out of 5 interactions, what is the average of `anyhelp`? Write it as a proportion and as a percent.**
+
+```{asis, echo = params$key}
+::: {.answer data-latex=""}
+0.4, or 40%.
+:::
+```
+
+\gap{2cm}
+
+**c)** What's the average of `anyhelp` in the control group (`German`)? Find it in the regression table above. Now, what does it mean *substantively* (how would you explain what the number means to your grandma)?
+
+```{asis, echo = params$key}
+::: {.answer data-latex=""}
+0.76 (the intercept). When a native German dropped the lemons, someone helped 76% of the time.
+:::
+```
+
+\gap{3.5cm}
+
+**d)** The estimate on `treatImm w/ Hijab, Conservative Att` is -0.13. What does that mean substantively? Use the control mean from (c) as your starting point. Think about it this way: 
+
+- What's a 13 *percentage point* decrease? 
+- Now, what's a 13 *percent* decrease? 
+- How are the two different? Why does that matter?
+
+```{asis, echo = params$key}
+::: {.answer data-latex=""}
+Help fell from 76% to 63%, a 13 percentage point decrease. A 13 percent decrease would be 76% x 0.87 = 66%. There is a 3 pp difference between the answers, showing why it's important to use "percentage points" when we are substracting two rates. Using the language of a "percent increase" or "decrease" implies a different calculation.
+:::
+```
+
+\gap{4cm}
+
+\newpage
+
+The regression below adds `femprop` as a control variable. `femprop` is the proportion of bystanders who were female, from 0 to 1.
+
+```{r q1-reg-controls}
+summary(lm(anyhelp ~ treat + femprop, data = data))
+```
+
+\newpage
+
+**e)** Think about the estimate on `femprop`. **Because `femprop` is a proportion, a 1 unit increase is equivalent to going from 0 to 1.** The general average of `femprop` is...
+
+```{r q1-femprop-mean, echo = TRUE}
+mean(data$femprop)
+```
+
+i) What does `femprop` = 0 mean? What does `femprop` = 1 mean? Hint: Remember that `femprop` measures the proportion of female bystanders at the train station.
+
+```{asis, echo = params$key}
+::: {.answer data-latex=""}
+0 = no female bystanders (all men). 1 = all of the bystanders were female.
+:::
+```
+
+\gap{2.5cm}
+
+ii) Explain the meaning of the coefficient. Going from `\rule{1.5cm}{0.4pt}`{=latex}% female bystanders to `\rule{1.5cm}{0.4pt}`{=latex}% female bystanders is associated with a `\rule{2.5cm}{0.4pt}`{=latex} change in the chance of getting help.
+
+```{asis, echo = params$key}
+::: {.answer data-latex=""}
+- 0% to 100%
+- a 3.2 percentage point decrease (-0.032), holding treatment constant (not significant, p = 0.19).
+:::
+```
+
+\gap{2.5cm}
+
+\newpage
+
+**f)** Now let's change the units of `femprop` to show how the substantive meaning stays the same, even if the units of the predictor change. We multiply `femprop` by 100 and round to the nearest whole number, so the new variable, `femprop_pct`, is the percent of bystanders who are female, not the proportion. For example, `femprop` = 0.5 becomes `femprop_pct` = 50, or 50% female. `femprop_pct` is still a number, not a category, so the regression still gives it one estimate. The regression below uses `femprop_pct` instead of `femprop`.
+
+```{r q1-reg-pct}
+summary(lm(anyhelp ~ treat + femprop_pct, data = data))
+```
+
+**How do we interpret the estimate on `femprop_pct`? Is it actually different from the estimate on `femprop` in the regression in e)? Why or why not?**
+
+```{asis, echo = params$key}
+::: {.answer data-latex=""}
+-0.00032: each extra percentage point of female bystanders is associated with a 0.032 percentage point lower chance of help. The two numbers are not actually substantively different, we've just gone from proportion units (0 to 1) to percentage units (0 to 100). 
+:::
+```
+
+\newpage
+
+**BONUS:** Now we round `femprop` to the nearest 10% and count in 10s, so `femprop_10` = 5, which means 50% female bystanders. Possible values of `femprop_10` range from 0 to 10. A 1 unit increase in `femprop_10` means 10 more percentage points of female bystanders.
+
+```{r q1-reg-10}
+summary(lm(anyhelp ~ treat + femprop_10, data = data))
+```
+
+**How do we interpret the estimate on `femprop_10`? How does it compare to the estimates on `femprop` and `femprop_pct`?**
+
+```{asis, echo = params$key}
+::: {.answer data-latex=""}
+-0.0032: each extra 10 percentage points of female bystanders goes with a 0.32 percentage point lower chance of help. Again, same substantive finding, just going from 0 to 10. 
+:::
+```
+
+\gap{3cm}
+
+\newpage
+
+# Question 2
+
+Go back to the regression in Question 1 e), which controls for `femprop`.
+
+```{r q2-reg-controls-top}
+summary(lm(anyhelp ~ treat + femprop, data = data))
+```
+
+**a)** Which statement best describes the estimate of -0.132 on `treatImm w/ Hijab, Conservative Att`? Circle one.
+
+(A) Compared to the `German` condition, the `treatImm w/ Hijab, Conservative Att` condition lowered the chance of getting help by 13.2 percentage points, but only when all of the bystanders were female (`femprop` = 1).
+
+(B) Compared to the `German` condition, the `treatImm w/ Hijab, Conservative Att` condition lowered the chance of getting help by 13.2 percentage points, but only when there were no female bystanders (`femprop` = 0).
+
+(C) Compared to the `German` condition, the `treatImm w/ Hijab, Conservative Att` condition lowered the chance of getting help by 13.2 percentage points, holding `femprop` constant.
+
+(D) Compared to the average of all the other conditions, the `treatImm w/ Hijab, Conservative Att` condition lowered the chance of getting help by 13.2 percentage points.
+
+(E) Compared to the average of all the other conditions, the `treatImm w/ Hijab, Conservative Att` condition lowered the chance of getting help by 13.2 percentage points, holding `femprop` constant.
+
+```{asis, echo = params$key}
+::: {.answer data-latex=""}
+(C). We're comparing the treatment conditions to the control as if they all had the same mix of female bystanders. With femprop included, the regression now shows: among interactions with the same share of female bystanders, how much lower is the chance of help in the treatment condition than in control? Adding the femprop control absorbs also absorbs some of the variation in the outcome that?s due to femprop, so that our estimates are more precise. 
+:::
+```
+
+\gap{0.5cm}
+
+**b)** Treatment was randomly assigned. What does the control variable, `femprop`, do in this regression? Circle one.
+
+(A) It removes the bias that random assignment creates between the treatment and control groups.
+
+(B) It soaks up variation in the outcome that is due to `femprop`, not the treatment, which can make our estimates of the treatment effects more precise.
+
+(C) It tells us the causal effect of `femprop` on whether people get help.
+
+(D) It accounts for omitted variable bias, which in this case is the proportion of female bystanders.
+
+```{asis, echo = params$key}
+::: {.answer data-latex=""}
+(B) See answer above. (A) is not true because random assignment does not create bias, it eliminates it. Same with (D). (C) is not true because we cannot interpret femprop as causal, as we didn't randomize it. 
+:::
+```
+
+\gap{0.5cm}
+
+**c)** Suppose we left `femprop` out of the regression. Would the estimate on `treatImm w/ Hijab, Conservative Att` suffer from omitted variable bias? Circle one.
+
+(A) Yes, because `femprop` may be related to whether people get help, so leaving it out biases the treatment estimate.
+
+(B) Yes, because as many variables that affect the outcome as possible should be included in the regression.
+
+(C) No, because the estimate on `femprop` is not statistically significant.
+
+(D) No, because treatment was randomly assigned, so `femprop` (or any other omitted variable) is not systematically related to treatment. 
+
+```{asis, echo = params$key}
+::: {.answer data-latex=""}
+(D) Randomization is not effected by omitted variable bias. If we randomize treatment correctly, treatment assignment cannot be related to *any* other variable. It is completely random. Therefore, no variable can relate to both A and B in the causal pathway of A --> B. Randomization isolates the the causal pathway of A --> B, or between the treatment --> and the outcome.
+:::
+```
+
+Now compare the estimate on `treatImm w/ Hijab, Conservative Att` in the regression in Question 1 a) without `femprop` (-0.133) to the one in Question 1 e) with `femprop` (-0.132). Is this evidence that leaving `femprop` out of the regression in Question 1 a) biased the estimate?
+
+```{asis, echo = params$key}
+::: {.answer data-latex=""}
+No. It barely moved (-0.133 to -0.132), which fits with randomization: treatment isn't related to `femprop`, so leaving it out doesn't bias the estimate.
+:::
+```
+
+\newpage
+
+**d)** What does the intercept (0.777) mean now that we added `+ femprop` to the regression? Hint: think about which treatment condition and which value of `femprop` it describes. (Remember: the intercept is the predicted outcome when every other variable in the regression equals 0.)
+
+```{r q2-reg-controls}
+summary(lm(anyhelp ~ treat + femprop, data = data))
+```
+
+```{asis, echo = params$key}
+::: {.answer data-latex=""}
+0.777: the predicted chance of help (78%) in the `German` condition when `femprop` = 0 (all-male bystanders).
+:::
+```
+
+\gap{3.5cm}
+
+\newpage
+
+# Question 3
+
+```{r q3-data}
+canvass_data <- read.csv("transphobia_canvass.csv")
+```
+
+Broockman and Kalla (2016) ran a door-to-door canvassing experiment in Miami-Dade County, Florida. First, voters took an online survey about their beliefs (the pre-survey), a few days to a few weeks before canvassers came to their door. Voters who came to the door were randomly assigned to have a conversation with a canvasser either about transgender people (`canvass` = 1) or a placebo conversation about recycling (`canvass` = 0). `canvass` is the treatment assignment variable. Six weeks later, the voters took an ostensibly unrelated survey about their beliefs.
+
+**a)** One of the outcomes^[any given study can have more than one outcome!] is `law_support`, a 1 to 7 scale. The survey described a Miami-Dade law that bans discrimination based on gender identity and asked, "Do you favor or oppose this new law?" 1 means strongly oppose, and 7 means strongly favor.
+
+```{r q3-reg-law}
+summary(lm(law_support ~ canvass, data = canvass_data))
+```
+
+**Interpret the estimate on `canvass`. Be specific about the units of the outcome. Can we read this estimate as a percentage point change, like in Question 1? Why or why not?**
+
+```{asis, echo = params$key}
+::: {.answer data-latex=""}
++0.27 points on the 1 to 7 scale (more support), which is not quite significant at the 0.05 level (p = 0.13). This outcome is *not* in percentage points: the outcome isn't 0/1, so the units are scale points. Outcomes don't have to be in 0 to 1 units :) 
+:::
+```
+
+\gap{3.5cm}
+
+\newpage
+
+**b)** The outcome is now `therm_trans`, a "feeling thermometer" from 0 to 100. Voters rated how warm or cold they feel toward transgender people, where 0 is very cold and 100 is very warm.
+
+```{r q3-reg-therm}
+summary(lm(therm_trans ~ canvass, data = canvass_data))
+```
+
+**Interpret the estimate on `canvass`. Is this a percentage point change? Why or why not?**
+
+```{asis, echo = params$key}
+::: {.answer data-latex=""}
++6.3 degrees warmer toward transgender people (p = 0.02). Not percentage points: the units are thermometer degrees.
+:::
+```
+
+\gap{3.5cm}
+
+\newpage
+
+**c)** The regression below adds `therm_trans_pre` as a control variable. This is the same feeling thermometer question, but asked in a survey *before* the canvassing took place. **Note:** Control variables in experiments' multivariate regressions should always be measured before the treatment, so the treatment can't change them. 
+
+```{r q3-reg-therm-pre}
+summary(lm(therm_trans ~ canvass + therm_trans_pre, data = canvass_data))
+```
+
+**i) Interpret the estimate on `therm_trans_pre`.**
+
+```{asis, echo = params$key}
+::: {.answer data-latex=""}
+0.65: each degree warmer on the pre-survey goes with 0.65 degrees warmer six weeks later, holding `canvass` constant.
+:::
+```
+
+\gap{2.5cm}
+
+**ii) Compare the standard error on `canvass` here to the one in b). What did adding the control do, and why?**
+
+```{asis, echo = params$key}
+::: {.answer data-latex=""}
+It fell from 2.63 to 1.93, which is what we hope for when adding pre-treatment controls to an experiment's regression. The control soaks up variation in the outcome: the pre-treatment thermometer is a good predictor of the post-treatment thermometer, so adding it makes a lot of sense. Once adding that control, the actual treatment estimate is more precise.
+:::
+```
+
+\gap{2.5cm}
+
+**iii) The estimate on `canvass` went from 6.3 in b) to 5.4 here. Does this mean the estimate in b) was biased? Why or why not?**
+
+```{asis, echo = params$key}
+::: {.answer data-latex=""}
+No. Treatment was randomly assigned, so both are unbiased. The estimates are a little different once we control for pre-treatment covariates because the control and treatment were slightly imbalanced - the treatment group was a little warmer towards trans people on average before the treatment (51.9 in the treatment group vs. 50.4 in the control group on the pre-survey thermometer). That's not a result of bias, it's random noise that's expected in a small-ish sample. 
+:::
+```
+
+\gap{2.5cm}
+
+\newpage
+
+**d)** The regression below adds two more control variables to the regression in c). `party` is the voter's party registration (Democrat, Republican, No party, or Other party). `ideology` is the voter's ideology from the pre-survey, from 1 (very conservative) to 7 (very liberal). Both were measured before the canvass.
+
+```{r q3-reg-therm-controls}
+summary(lm(therm_trans ~ canvass + therm_trans_pre + party + ideology, data = canvass_data))
+```
+
+**i) Interpret the estimate on `partyRepublican`. Which group is it compared to?**
+
+```{asis, echo = params$key}
+::: {.answer data-latex=""}
+0.09 degrees warmer than Democrats (the baseline), holding the other variables constant. Essentially zero and not significant. This is interesting and probably not expected! The feelings thermometers were likely similar at the time because trans issues were not yet incredibly polarized. 
+:::
+```
+
+\gap{2.5cm}
+
+**ii) Interpret the estimate on `ideology`.**
+
+```{asis, echo = params$key}
+::: {.answer data-latex=""}
+1.6: each point more liberal on the ideology scale (for example, going from 4 to 5 on the scale) is associated with 1.6 degrees warmer on the feeling thermometer, holding the other variables constant.
+:::
+```
+
+\gap{2.5cm}
+
+**iii) Compare the standard error on `canvass` here to the one in c). Did adding `party` and `ideology` make the estimate much more precise? Why or why not?**
+
+```{asis, echo = params$key}
+::: {.answer data-latex=""}
+No. The SE barely changed (1.93 to 1.95). `party` and `ideology` mostly capture the same feelings the pre-survey thermometer already measures, so they soak up little new variation in the outcome beyond what the pre-treatment thermometer already accounted for. Therefore, the estimate doesn't get more precise.
+:::
+```
+
+\gap{2.5cm}

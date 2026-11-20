@@ -1,41 +1,35 @@
 ---
 title: "PS 3: Week 11"
 subtitle: "Multiple Linear Regression"
+author: "Maya Mikelson"
 output:
   beamer_presentation:
-    theme: "default"
+    theme: "Madrid"
+    colortheme: "default"
     slide_level: 2
-    incremental: false
+fontsize: 11pt
+params:
+  show_answers: true
+  data_ok: false
 header-includes:
+  - \usepackage{xcolor}
+  - \newcommand{\hlred}[1]{\colorbox{red!20}{#1}}
+  - \newcommand{\hlblue}[1]{\colorbox{blue!15}{#1}}
   - \setbeamertemplate{navigation symbols}{}
-  - \setbeamertemplate{footline}[frame number]
+  - \usepackage{tikz}
+  - \usepackage{subcaption}
+  - \definecolor{targetred}{HTML}{EA5B5D}
+  - \usepackage{tikz}
+  - \usepackage{pgfplots}
+  - \pgfplotsset{compat=1.18}
+  - \definecolor{curveblue}{RGB}{16, 120, 200}
+  - \definecolor{cyangreen}{RGB}{0, 195, 160}
+  - \definecolor{cyanfill}{RGB}{232, 252, 248}
+  - \definecolor{pinkred}{RGB}{235, 30, 95}
+  - \definecolor{pinkfill}{RGB}{253, 235, 243}
+  - \definecolor{purpletext}{RGB}{125, 70, 210}
+  - \definecolor{purplefill}{RGB}{242, 238, 255}
 ---
-
-<!--
-=====================================================================
-TODO -- DATA NEEDED (search for "DATA NEEDED" in this file)
-
-Two slides in the original deck used R output from lecture data that
-I don't have. The code is written to run once the files exist; until
-then, each slide falls back to the ORIGINAL screenshot so the deck
-still knits.
-
-1. Slide "Bivariate regression" (scatterplot)  -> variables
-   marriage_opinion (x) and marriage_perception (y).
-   Save the lecture dataset as: data/marriage.csv
-   (If the columns are named differently, edit the chunk
-   `marriage-plot` below.)
-
-2. Slide "Example output" (multiple regression) -> a data frame the
-   original called `democrats` (2020 US House Democratic candidates):
-   dem_us_house_percent_2020, spending_dem_ushouse_2020,
-   clinton_percent_2016, dem_us_house_percent_2018.
-   Save as: data/democrats.csv
-
-Everything else (added-variable plots) uses R's built-in mtcars data.
-Needs the `car` package: install.packages("car")
-=====================================================================
--->
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
@@ -46,100 +40,52 @@ knitr::knit_hooks$set(size = function(before, options, envir) {
   if (before) paste0("\\", options$size, "\n\n") else "\\normalsize\n\n"
 })
 
+qr_image <- "images/adobe-express-qr-code.png"
+
 # DATA NEEDED: put the lecture files in a data/ folder (see note at top).
-marriage_path  <- "data/marriage.csv"
-democrats_path <- "data/democrats.csv"
+marriage_path  <- "data/broockman_skovron.csv"
+democrats_path <- "data/ps3-house-election-spending.csv"
 
 has_marriage  <- file.exists(marriage_path)
 has_democrats <- file.exists(democrats_path)
 ```
 
-## Attendance Survey
-
-\begin{columns}[c]
-\begin{column}{0.55\textwidth}
-\begin{itemize}
-  \item \textbf{Fill out before the end of section!}
-  \begin{itemize}
-    \item \url{https://forms.gle/CCZYNHBQ5Y8CvPiRA}
-  \end{itemize}
-\end{itemize}
-\end{column}
-\begin{column}{0.4\textwidth}
-```{r, out.width="100%", fig.align="center"}
-knitr::include_graphics("images/attendance-qr.png")
-```
-\end{column}
-\end{columns}
-
-<!-- Notes: Put at the end of the slides too -->
 
 ## Agenda
 
-1. Attendance Survey
-2. Group Project Surveys!
-3. Reviewing Bivariate Regression
-4. Multiple Linear Regression
-5. Jupyter Example
+1. Bivariate Regression
+2. Multiple Linear Regression
 
-## Housekeeping
+## Reminders
 
-- Problem Set 3 due on **Friday by 11:59 pm**
-- First Draft of Report due 11/21
-
-## Even More Surveys!
-
-- Google Sheet with survey links (next slide)
-- Reminders while you fill out the surveys
-    - Please fill them out completely, like you would want someone to fill out your own survey
-    - For questions about your GPA, screentime, etc.
-        1. Remember that your responses are anonymous
-        2. You can literally look these things up to answer those questions
-- You can also ask questions!
-
-## Final Project Surveys
-
-\begin{columns}[c]
-\begin{column}{0.55\textwidth}
-\footnotesize
-\url{https://docs.google.com/spreadsheets/d/1y9c10TO1zTEgsBxOBMjqvztZIoJzpTyour5GjJTSpgs/edit?usp=sharing}
-\end{column}
-\begin{column}{0.4\textwidth}
-```{r, out.width="100%", fig.align="center"}
-knitr::include_graphics("images/project-surveys-qr.png")
-```
-\end{column}
-\end{columns}
-
-<!-- Notes: Put at the end of the slides too -->
+- Problem Set 3 due **Today by 11:59 pm**
+- First Draft of Report due 11/13
+   - Make sure you know how to load data in the jupyter notebook so you can ask for help if you need it
 
 ## Recall: Bivariate Linear Regression
 
 <!-- DATA NEEDED: lecture dataset with marriage_opinion and marriage_perception
      -> save as data/marriage.csv. Falls back to the original screenshot until then. -->
 
-\begin{columns}[c]
-\begin{column}{0.5\textwidth}
-\begin{itemize}
-  \item We can explain relationships through the form:
-\end{itemize}
+::::: {.columns align=center}
+:::: {.column width="60%"}
+- We can explain relationships through the form:
 
-\texttt{predicted\_y = slope * x + intercept}
+`predicted_y = slope * x + intercept`
 
-\vspace{0.5em}
-\begin{itemize}
-  \item Useful code:
-\end{itemize}
+\pause
+
+- Useful code:
 
 ```{r, echo=TRUE, eval=FALSE}
 qplot(x, y, data) +
   geom_smooth(method = 'lm')
 
 summary(lm(y.var ~ x.var,
-           data = table_name))
+           data = df))
 ```
-\end{column}
-\begin{column}{0.47\textwidth}
+::::
+:::: {.column width="40%"}
 ```{r marriage-plot, eval=has_marriage, out.width="100%", fig.width=4.5, fig.height=4.5, fig.align="center"}
 marriage <- read.csv(marriage_path)
 ggplot(marriage, aes(x = marriage_opinion, y = marriage_perception)) +
@@ -150,8 +96,8 @@ ggplot(marriage, aes(x = marriage_opinion, y = marriage_perception)) +
 ```{r marriage-fallback, eval=!has_marriage, out.width="100%", fig.align="center"}
 knitr::include_graphics("images/original-scatter-marriage.png")
 ```
-\end{column}
-\end{columns}
+::::
+:::::
 
 ## What does linear regression tell us about the relationship?
 
@@ -162,6 +108,7 @@ knitr::include_graphics("images/original-scatter-marriage.png")
   \item As our independent variable ($x$) increases by one, the dependent variable ($y$) tends to change by $m$ units on average.
 \end{itemize}
 \end{column}
+\pause
 \begin{column}{0.48\textwidth}
 \underline{Intercept ($b$):}
 \begin{itemize}
@@ -173,29 +120,56 @@ knitr::include_graphics("images/original-scatter-marriage.png")
 \end{column}
 \end{columns}
 
+```{r attendance, results='asis', echo=FALSE}
+if (params$show_answers) {
+  cat(paste0("
+## Attendance Survey
+\\begin{center}
+\\includegraphics[width=0.7\\textwidth]{", qr_image, "}
+\\end{center}
+"))
+}
+```
+
 ## Beyond Bivariate Relationships...
 
 - In reality, we assume that multiple factors may influence an outcome we're interested in:
-    - Consider a five-point measure of support for universal healthcare. What factors might predict greater/lesser support for this policy?
-        - Partisanship
-        - Income
-        - Education level
-        - Race
-        - Age
-        - And so on...
+
+\pause
+
+   - Consider a five-point measure of support for universal healthcare. What factors might predict greater/lesser support for this policy?
+
+\pause
+     - Partisanship
+     - Income
+     - Education level
+     - Race
+     - Age
+     - And so on...
 
 ## Multiple Linear Regression
 
 - Multiple linear regressions use the same principle as bivariate linear regressions but with multiple predictor variables
     - E.g. Using partisanship, education, and age to predict support for universal healthcare
+
+\pause
+
 - Useful for questions where we think multiple relevant factors could explain the variation in the outcome variable among our respondents
 
 \vspace{1em}
 \small
-Healthcare = (Slope$_1$ $\times$ partisanship) + Intercept
+
+$$
+\text{Healthcare} = (\text{Slope}_1 \times \text{partisanship}) + \text{Intercept}
+$$
+
+\pause
 
 \vspace{0.5em}
-Healthcare = (Slope$_1$ $\times$ partisanship) + (Slope$_2$ $\times$ education) + (Slope$_3$ $\times$ age) + Intercept
+
+$$
+\text{Healthcare} = (\text{Slope}_1 \times \text{partisanship}) + (\text{Slope}_2 \times \text{education}) + (\text{Slope}_3 \times \text{age}) + \text{Intercept}
+$$
 
 ## Multiple Linear Regression comes from multiple lines... who knew!
 
@@ -208,36 +182,40 @@ avPlots(fit_mtcars)
 
 ## So why perform multivariate regression?
 
-\begin{columns}[c]
-\begin{column}{0.6\textwidth}
+::::: {.columns align=center}
+:::: {.column width="55%"}
 \small
-\begin{itemize}
-  \item Remember, our consistent issue in stats:
-  \begin{itemize}
-    \item We need to find the signal in the noise
-    \item In regression: we want to find the ``real'' value or relationship between variables, but there is noise (``error'')
-  \end{itemize}
-  \item Our questions:
-  \begin{itemize}
-    \item Is the noise we observe due to random chance, or some other factor?
-    \item If the noise is NOT due to random chance, how do we reduce our overall error?
-  \end{itemize}
-\end{itemize}
-\end{column}
-\begin{column}{0.37\textwidth}
+
+- Remember, our consistent issue in stats:
+    - We need to find the signal in the noise
+    - In regression: we want to find the "real" value or relationship between variables, but there is noise ("error")
+
+\pause
+
+- Our questions:
+    - Is the noise we observe due to random chance, or some other factor?
+    - If the noise is NOT due to random chance, how do we reduce our overall error?
+::::
+:::: {.column width="47%"}
 ```{r, out.width="100%", fig.align="center"}
-knitr::include_graphics("images/regression-residuals.png")
+knitr::include_graphics("images/residuals.png")
 ```
-\end{column}
-\end{columns}
+::::
+:::::
 
 ## As an equation:
 
 Truth = Our prediction (Estimate)
 
+\pause
+
 \hspace{2em} $\pm$ Error due to random chance
 
+\pause
+
 \hspace{2em} $\pm$ Influence from other variables
+
+\pause
 
 \vspace{1em}
 Multivariate regression helps reduce the influence from other variables (e.g. omitted variables) by holding them constant or "controlling" for their effect.
@@ -246,6 +224,9 @@ Multivariate regression helps reduce the influence from other variables (e.g. om
 
 To perform a multivariate regression, all you need to do is add the new variables to the linear model. For example:
 
+\pause
+
+\small
 ```{r, echo=TRUE, eval=FALSE}
 summary(lm(output.var ~ ind.var1 + ind.var2 + ind.var3, data))
 ```
@@ -257,7 +238,9 @@ summary(lm(output.var ~ ind.var1 + ind.var2 + ind.var3, data))
      dem_us_house_percent_2018 -> save as data/democrats.csv.
      Falls back to the original screenshot until then. -->
 
-```{r mlr-output, eval=has_democrats, comment=NA, size="scriptsize"}
+\scriptsize
+
+```{r mlr-output, eval=has_democrats, comment=NA}
 democrats <- read.csv(democrats_path)
 mlr_fit <- lm(dem_us_house_percent_2020 ~ spending_dem_ushouse_2020 +
                 clinton_percent_2016 + dem_us_house_percent_2018,
@@ -265,41 +248,31 @@ mlr_fit <- lm(dem_us_house_percent_2020 ~ spending_dem_ushouse_2020 +
 summary(mlr_fit)
 ```
 
+\normalsize
+
 ```{r mlr-fallback, eval=!has_democrats, out.width="90%", fig.align="center"}
 knitr::include_graphics("images/original-mlr-output-democrats.png")
 ```
 
-## Jupyter Notebook Example
 
 ## Scripts for Interpreting MLR
 
 \small
 **Script 1:** Holding constant [the variables you're controlling for], each [one-unit increase in X] is correlated with [interpretation of the coefficient of interest].
 
+\pause
+
 - Example: Holding the presidential vote in 2016 and Democratic house vote in 2018 constant, each additional million dollars spent in the congressional race is correlated with -0.216% lower Democratic vote share in 2020.
+
+\pause
 
 **Script 2:** On average, a [one-unit increase in X] is associated with a [interpretation of the coefficient of interest], holding the other variables in the regression constant.
 
+\pause
+
 - Example: On average, districts where the Democratic house vote in 2018 is 1-percent higher is associated with a 0.11% higher 2020 Democratic house vote, holding constant the other variables.
 
-## Attendance Survey
-
-\begin{columns}[c]
-\begin{column}{0.55\textwidth}
-\begin{itemize}
-  \item \textbf{Fill out before the end of section!}
-  \begin{itemize}
-    \item \url{https://forms.gle/CCZYNHBQ5Y8CvPiRA}
-  \end{itemize}
-\end{itemize}
-\end{column}
-\begin{column}{0.4\textwidth}
-```{r, out.width="100%", fig.align="center"}
-knitr::include_graphics("images/attendance-qr.png")
-```
-\end{column}
-\end{columns}
 
 ## Acknowledgements
 
-Special thanks to prior GSIs for providing materials off of which some of these slides are based, especially Ian Castro.
+Special thanks to prior GSIs for providing materials off of which some of these slides are based, especially Will Halm.

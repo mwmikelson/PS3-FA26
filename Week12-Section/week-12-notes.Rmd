@@ -1,0 +1,56 @@
+---
+title: "PS 3: Week 12"
+subtitle: "Interpreting Regression"
+author: "Maya Mikelson"
+lang: en-US
+section-titles: false
+output:
+  beamer_presentation:
+    theme: "Madrid"
+    colortheme: "default"
+    slide_level: 2
+  pdf_document:
+    template: tagged-article.tex
+fontsize: 11pt
+header-includes:
+  - \usepackage{graphicx}
+params:
+  show_answers: true
+  data_ok: false
+---
+
+```{r setup, include=FALSE}
+qr_image <- "qr-code-2.png"
+```
+
+
+## Reminders
+
+Final Project draft was due on Friday, turn it in if you haven't yet.
+
+```{r attendance, results='asis', echo=FALSE}
+if (params$show_answers) {
+  cat(paste0("
+## Attendance Survey
+\\begin{center}
+\\includegraphics[width=0.7\\textwidth]{", qr_image, "}
+\\end{center}
+"))
+}
+```
+
+## In Class Activity
+
+Work in groups of 2-3 with people not in your project groups.
+
+We will go over the answers at 12:50.
+
+Notes:
+
+- When questions ask for \textit{estimated regression equation} it is asking for the formula you would use to calculate predicted values
+
+- Standard Error for question 2 is in the parentheses under the estimate
+
+- Make sure to note the units of variable when calculating estimated regression equation
+
+- Constant is the same thing as Intercept

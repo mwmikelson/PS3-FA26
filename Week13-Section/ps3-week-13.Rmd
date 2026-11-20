@@ -1,0 +1,315 @@
+---
+title: "PS 3: Week 13"
+subtitle: "Multiple Linear Regression and Experiments; Natural Experiments"
+author: "Maya Mikelson"
+output:
+  beamer_presentation:
+    theme: "Madrid"
+    colortheme: "default"
+    slide_level: 2
+fontsize: 11pt
+params:
+  show_answers: true
+  data_ok: false
+header-includes:
+  - header-includes:
+  - \usepackage{xcolor}
+  - \newcommand{\hlred}[1]{\colorbox{red!20}{#1}}
+  - \newcommand{\hlblue}[1]{\colorbox{blue!15}{#1}}
+  - \setbeamertemplate{navigation symbols}{}
+  - \usepackage{tikz}
+  - \usetikzlibrary{decorations.pathreplacing}
+  - \usepackage{subcaption}
+  - \definecolor{targetred}{HTML}{EA5B5D}
+  - \newcommand{\hltable}[5]{\begin{center}\begin{tikzpicture}\node[anchor=south west,inner sep=0] (img) at (0,0) {\includegraphics[width=\textwidth,height=0.78\textheight,keepaspectratio]{#1}};\begin{scope}[x={(img.south east)},y={(img.north west)}]\draw[targetred,ultra thick,fill=targetred,fill opacity=0.15] (#2,{1-#3}) rectangle ({#2+#4},{1-#3-#5});\end{scope}\end{tikzpicture}\end{center}}
+  - \usepackage{pgfplots}
+  - \pgfplotsset{compat=1.18}
+  - \definecolor{curveblue}{RGB}{16, 120, 200}
+  - \definecolor{cyangreen}{RGB}{0, 195, 160}
+  - \definecolor{cyanfill}{RGB}{232, 252, 248}
+  - \definecolor{pinkred}{RGB}{235, 30, 95}
+  - \definecolor{pinkfill}{RGB}{253, 235, 243}
+  - \definecolor{purpletext}{RGB}{125, 70, 210}
+  - \definecolor{purplefill}{RGB}{242, 238, 255}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+## Attendance Survey
+
+
+## PS 3: Week 12
+
+\vspace{1.2cm}
+\begin{center}
+\Large Multiple Linear Regression and Experiments
+\end{center}
+
+## Agenda
+
+1. Attendance Survey
+2. MLR: Experiments
+3. MLR: Experiments: Worksheet
+4. Interpreting Regression Tables
+5. Regression Table Example: Observational
+
+## Reading a Regression Table
+
+- Each column reports the results of one regression. Multiple columns means we are looking at the results of multiple different regressions (in this example, two). The column titles should tell you what is different about the regressions. \pause
+    - Sometimes this will be switching subsets of data (as in this example). \pause
+    - Sometimes it will involve switching outcomes. \pause
+    - Sometimes the outcome and subset will be the same, but new variables will be introduced into the regression. \pause
+    - You have to use context and the table notes to be sure what is changing across the columns.
+
+## Reading a Regression Table
+
+- Each row represents the coefficients/estimates on one of the variables in the regression. \pause
+    - The first column shows the variable that is being estimated. \pause
+    - The last row of estimates contains the Intercept or Constant term. \pause
+    - In each cell, the first number is the coefficient, and the number in brackets below it is the standard error. These are the only numbers we need to calculate a t-statistic, confidence interval, and p-value. \pause
+    - The stars next to each number indicate if the estimates are statistically significant and, if so, how small the p-value is. (The Table Notes along the bottom will tell you how to interpret the stars.)
+
+## To re-cap
+
+- Missing cells mean that this variable was not included in this regression. Sometimes it will just be blank, sometimes there will be a "-" to indicate it is being left blank on purpose. \pause
+- The sample size and R squared are printed at the bottom of each column. \pause
+- $R^2$ or R squared is the proportion of the variation in the dependent variable that is predictable from the independent variable(s).
+
+## Steps for Interpretation!
+
+\small
+
+1. Look at the **title** of the table \pause
+    a. \textcolor{blue}{What are the authors generally trying to tell us?}
+    b. This can clue you into relevant variables and takeaways, though keep a critical eye to the table yourself! \pause
+2. Look at the title of each **column** (this is the title of each regression model) \pause
+    a. \textcolor{blue}{What is each model trying to tell me? What subset of data are they using? What outcome?} \pause
+3. Look at the **row** labels (these are the predictor variables) \pause
+    a. \textcolor{blue}{Which ones are causal (treatment assignment)? Which ones are not (any other variables)?} \pause
+4. Look at the point **estimates** themselves \pause
+    a. \textcolor{blue}{Based on the row label and column title, what is this estimate telling me?} \pause
+5. Look at the measures of **noise** \pause
+    a. \textcolor{blue}{Is the estimate significant? How do I interpret significance in this context?}
+        i. \textcolor{blue}{Is it causal?}
+
+\normalsize
+
+## Table Walkthrough: Title
+
+\hltable{images/regression-table.png}{0.0372}{0.0151}{0.8622}{0.0963}
+
+## Table Walkthrough: Column Titles
+
+\hltable{images/regression-table.png}{0.3126}{0.1408}{0.5932}{0.0649}
+
+## Table Walkthrough: Row Labels
+
+\hltable{images/regression-table.png}{0.0451}{0.2056}{0.2801}{0.5128}
+
+## Table Walkthrough: Point Estimate
+
+\hltable{images/regression-table.png}{0.3283}{0.4159}{0.0692}{0.0511}
+
+## Table Walkthrough: Significance Stars
+
+\hltable{images/regression-table.png}{0.3928}{0.4159}{0.0441}{0.0412}
+
+## Example
+
+\small
+Top-left box of the previous table:
+
+1. Based on the title, it seems that we're supposed to look at how Democratic spending is related to Democratic vote share in 2020 Congressional races. "Controls" implies a multiple linear regression. \pause
+2. The model is called "Democratic incumbents". The outcome is the vote share for Democrats in 2020 Congressional races, but only in races where Democrats already held the seat. \pause
+3. The row refers to Democratic spending in 2020 and should be interpreted in millions of dollars. \pause
+4. Given that "vote share" is in percentage points, and Democratic spending is in millions of dollars: an increase of \$1 million dollars in Democratic spending is associated with, on average, a 0.22% decrease in Democratic vote share in 2020 Congressional races where Democrats were the incumbents. \pause
+5. This relationship is not significant (note that the standard error and estimate are of similar size!) \pause
+    a. **None of these variables have a causal interpretation because the variables are not randomly assigned.**
+
+\normalsize
+
+
+## PS 3: Week 13
+
+\vspace{1.2cm}
+\begin{center}
+\Large Natural Experiments
+\end{center}
+
+## Agenda
+
+1. Attendance Survey
+2. Reviewing Regression Tables
+3. Natural Experiments
+4. Instrumental Variables
+5. Example of Instrumental Variables
+
+## Housekeeping
+
+- First Draft of Report due 11/21 \pause
+    - You can look at results as a group \pause
+    - **Write the reports individually** \pause
+        - Three statistical tests + interpretations \pause
+    - Make sure you go to the instructions Google Doc and upload \pause
+- Presentation due 11/26 (day before Thanksgiving) \pause
+    - Upload slides on bCourses \pause
+    - 5-7 minute presentations \pause
+- We will hold presentations the last day of section \pause
+    - Because of this, next week will be some final review!
+
+# Review of Regression Tables
+
+## Interpreting a Regression Table
+
+\small
+
+1. Look at the **title** of the table \pause
+    a. \textcolor{blue}{What are the authors generally trying to tell us?}
+    b. This can clue you into relevant variables and takeaways, though keep a critical eye to the table yourself! \pause
+2. Look at the title of each **column** (this is the title of each regression model) \pause
+    a. \textcolor{blue}{What is each model trying to tell me? What subset of data are they using? What outcome?} \pause
+3. Look at the **row** labels (these are the predictor variables) \pause
+    a. \textcolor{blue}{Which ones are causal (treatment assignment)? Which ones are not (any other variables)?} \pause
+4. Look at the point **estimates** themselves \pause
+    a. \textcolor{blue}{Based on the row label and column title, what is this estimate telling me?} \pause
+5. Look at the measures of **noise** \pause
+    a. \textcolor{blue}{Is the estimate significant? How do I interpret significance in this context?}
+        i. \textcolor{blue}{Is it causal?}
+
+\normalsize
+
+## Regression Table Example
+
+\hltable{images/regression-table.png}{0.3205}{0.2115}{0.1038}{0.0845}
+
+## Example
+
+\small
+Top-left box of the previous table:
+
+1. Based on the title, it seems that we're supposed to look at how Democratic spending is related to Democratic vote share in 2020 Congressional races. "Controls" implies a multiple linear regression. \pause
+2. The model is called "Democratic incumbents". The outcome is the vote share for Democrats in 2020 Congressional races, but only in races where Democrats already held the seat. \pause
+3. The row refers to Democratic spending in 2020 and should be interpreted in millions of dollars. \pause
+4. Given that "vote share" is in percentage points, and Democratic spending is in millions of dollars: an increase of \$1 million dollars in Democratic spending is associated with, on average, a 0.22% decrease in Democratic vote share in 2020 Congressional races where Democrats were the incumbents. \pause
+5. This relationship is not significant (note that the standard error and estimate are of similar size!) \pause
+    a. **None of these variables have a causal interpretation because the variables are not randomly assigned.**
+
+\normalsize
+
+# Natural Experiments
+
+## The Revenge of Observational Data
+
+- We know randomized experiments have many benefits---by randomly assigning treatment, we can estimate a causal effect by eliminating various sources of bias \pause
+- But they also have limitations---you are viewing an effect in one study at one point in time, tested on one sample. \pause
+- Observational data has many benefits---it's real-world data that can more convincingly generalize to real-world processes \pause
+- But we rarely see a randomization of treatment---\textcolor{blue}{can we identify a causal effect?}
+
+## Natural Experiments
+
+- We can find randomization in the real-world to take advantage of the benefits of both real-world data and randomization of treatment \pause
+- Examples \pause
+    - Having a son or daughter \pause
+    - Experiencing more (or less) rainfall \pause
+    - Living on one Greek island instead of another \pause
+    - Being drafted (Vietnam war) \pause
+    - Barely winning (vs. losing) an election \pause
+- In all these cases, you have to make the case that randomization is actually occurring \pause
+- We don't control randomization, but we claim that we found it
+
+# Instrumental Variables
+
+## Instrumental Variables
+
+- Say we want to know if X causes Y, but X is not randomly assigned. \textcolor{blue}{What do we do?} \pause
+- If we find something that is random that causes X, we can argue for as-if randomization \pause
+    - This is called an **instrument** \pause
+    - The instrument is what performs the random assignment of X (our hypothetical treatment)
+
+## An Example: Military Service
+
+\begin{center}
+\begin{tikzpicture}[>=stealth, every node/.style={align=center}]
+\node (i1) at (0,1.8) {Instrument};
+\node (t1) at (5.4,1.8) {Independent/treatment\\variable};
+\node (o1) at (11,1.8) {Outcome};
+\draw[->] (i1) -- (t1);
+\draw[->] (t1) -- (o1);
+\node<2-> (i2) at (0,0) {Drafted into\\Vietnam War};
+\node<2-> (t2) at (5.4,0) {Military\\service};
+\node<2-> (o2) at (11,0) {Political\\attitudes};
+\draw<2->[->] (i2) -- (t2);
+\draw<2->[->] (t2) -- (o2);
+\end{tikzpicture}
+\end{center}
+
+## An Example: Military Service
+
+\begin{center}
+\includegraphics[height=0.42\textheight,alt={Diagram of an instrumental variable design. An arrow labeled first stage runs from the instrument to the independent variable, and another arrow runs from the independent variable to the outcome. Confounders (omitted variables) affect both the independent variable and the outcome, shown with dashed red arrows. A crossed-out arrow from the instrument directly to the outcome is labeled exclusion restriction.}]{images/iv-diagram.png}
+\end{center}
+
+\small
+Requirements: \pause
+
+1. Instrument is randomly assigned \pause
+2. **First-Stage Condition**: Instrument must be correlated with X \pause
+3. **Exclusion Restriction**: Instrument affects the y \underline{only through our x} \pause
+
+If these requirements are met, we can compare those who receive the instrument to those who do not to estimate a causal effect.
+
+\normalsize
+
+## An Example: Military Service
+
+\begin{center}
+\begin{tikzpicture}[>=stealth, every node/.style={align=center}]
+\node (i1) at (0,2.2) {Instrument};
+\node (t1) at (5.4,2.2) {Independent/treatment\\variable};
+\node (o1) at (11,2.2) {Outcome};
+\draw[->] (i1) -- (t1);
+\draw[->] (t1) -- (o1);
+\node (i2) at (0,0) {Drafted into\\Vietnam War};
+\node (t2) at (5.4,0) {Military\\service};
+\node (o2) at (11,0) {Political\\attitudes};
+\draw[->] (i2) -- (t2);
+\draw[->] (t2) -- (o2);
+\node<2->[text=blue] at (2.7,0.6) {Correlated?};
+\node<3->[text=blue] at (0,-1.05) {Random?};
+\draw<4->[decorate,decoration={brace,mirror,amplitude=7pt}] (-0.8,-1.6) -- (11.8,-1.6);
+\node<4->[text=blue,text width=11.5cm] at (5.5,-2.6) {\hyphenpenalty=10000 Does the instrument cause the outcome other than through the independent variable? (Exclusion Restriction)};
+\end{tikzpicture}
+\end{center}
+
+# Instrumental Variables: An Example
+
+## Paper: Economic Shocks and Civil Conflict
+
+\begin{center}
+\includegraphics[height=0.7\textheight,alt={Abstract of the paper Economic Shocks and Civil Conflict: An Instrumental Variables Approach, by Edward Miguel, Shanker Satyanath, and Ernest Sergenti. The authors use rainfall variation as an instrumental variable for economic conditions in 41 African countries during 1981 to 1999, and find that negative growth shocks increase the likelihood of civil conflict.}]{images/miguel-paper-abstract.png}
+
+Paper link: \url{https://www.journals.uchicago.edu/doi/10.1086/421174}
+\end{center}
+
+## Discussion Questions
+
+- \textcolor{blue}{1: What is the outcome variable?}
+- \textcolor{blue}{2: What is the independent/treatment variable?}
+- \textcolor{blue}{3: What is the instrument?}
+- \textcolor{blue}{4: Does the exclusion restriction hold? Why might it not hold?}
+
+\pause
+Discuss with your neighbors for 10 min and we will share answers together.
+
+## Answers: Rainfall as an Instrument
+
+\begin{center}
+\includegraphics[height=0.75\textheight,alt={Instrumental variable diagram for the paper. Rainfall variation has a first-stage arrow to economic conditions, which has an arrow to civil conflict. Confounders (omitted variables) affect both economic conditions and civil conflict, shown with dashed red arrows. A crossed-out arrow from rainfall variation directly to civil conflict is labeled exclusion restriction.}]{images/rainfall-diagram.png}
+\end{center}
+
+
+## Acknowledgements
+
+Special thanks to prior GSIs for providing materials off of which some of these slides are based, especially Will Halm.

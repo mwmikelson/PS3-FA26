@@ -15,25 +15,6 @@ header-includes:
 knitr::opts_chunk$set(echo = FALSE)
 ```
 
-## Attendance Survey
-
-\begin{columns}[c]
-\begin{column}{0.55\textwidth}
-\begin{itemize}
-  \item \textbf{Fill out before the end of section!}
-  \begin{itemize}
-    \item \url{https://forms.gle/oLxHc54dZVgCQjqr7}
-  \end{itemize}
-\end{itemize}
-\end{column}
-\begin{column}{0.4\textwidth}
-```{r, out.width="100%", fig.align="center"}
-knitr::include_graphics("images/attendance-qr.png")
-```
-\end{column}
-\end{columns}
-
-<!-- Notes: Put at the end of the slides too -->
 
 ## Agenda
 
@@ -195,24 +176,7 @@ knitr::include_graphics("images/scatter-line-of-best-fit.png")
 
 ## Jupyter Notebook Example
 
-## Attendance Survey
-
-\begin{columns}[c]
-\begin{column}{0.55\textwidth}
-\begin{itemize}
-  \item \textbf{Fill out before the end of section!}
-  \begin{itemize}
-    \item \url{https://forms.gle/oLxHc54dZVgCQjqr7}
-  \end{itemize}
-\end{itemize}
-\end{column}
-\begin{column}{0.4\textwidth}
-```{r, out.width="100%", fig.align="center"}
-knitr::include_graphics("images/attendance-qr.png")
-```
-\end{column}
-\end{columns}
 
 ## Acknowledgements
 
-Special thanks to prior GSIs for providing materials off of which some of these slides are based, especially Ian Castro and Rebekah Jones.
+Special thanks to prior GSIs for providing materials off of which some of these slides are based, especially Will Halm.
